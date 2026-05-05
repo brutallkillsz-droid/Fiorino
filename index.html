@@ -127,7 +127,7 @@
         .tag-fixo { background: rgba(16, 185, 129, 0.2); color: #34d399; padding: 4px 8px; border-radius: 4px; font-weight: 700; font-size: 10px; border: 1px solid rgba(16, 185, 129, 0.3); }
         .tag-curinga { background: rgba(168, 85, 247, 0.2); color: #c084fc; padding: 4px 8px; border-radius: 4px; font-weight: 700; font-size: 10px; border: 1px solid rgba(168, 85, 247, 0.3); }
         
-        /* NOVO: ESTILOS PARA REJEIÇÃO */
+        /* ESTILOS PARA REJEIÇÃO */
         .checkbox-reject { accent-color: #ff003c; width: 16px; height: 16px; cursor: pointer; }
         .text-neon-red {
             color: #ff003c !important;
@@ -241,7 +241,6 @@
             <label class="switch-label"><input type="checkbox" id="checkAll" checked> Utilizar Curingas (All)</label>
         </div>
         
-        <!-- NOVO: BOTÃO DE ACESSO DIRETO AO HISTÓRICO -->
         <div style="text-align: center; margin-top: 40px;">
             <button class="btn-top-back" style="display:inline-flex; font-size: 13px; padding: 12px 25px; border-color: var(--brand); color: #fff;" onclick="viewGlobalHistory()">
                 <i class="fa-solid fa-calendar-days"></i> Consultar Histórico Geral (Online)
@@ -278,7 +277,7 @@
                         <th style="width: 60px; color: #a5f3fc;">Litragem</th>
                         <th style="width: 360px;">Nome Motorista (Popup Auto)</th>
                         <th style="width: 80px;">ID</th>
-                        <th>Veículo</th>
+                        <th style="width: 100px;">Veículo</th>
                         <th style="color: #fbbf24;">Letra</th>
                         <th style="width: 90px;">Tipo Match</th>
                         <th style="color:var(--success)">Cluster (Do Arquivo)</th>
@@ -557,7 +556,7 @@
                             rota: r.id, at: r.at, nome: m.nome, id: m.id, 
                             veic: m.veic, letra: r.letra, rodou: m.rodou, 
                             cluster: r.cluster, litragem: r.litragem, matchType: type,
-                            rejected: false // Inicializa como falso
+                            rejected: false, rejectReason: "" // Inicializa como falso e sem motivo
                         });
                         m.disp = false; r.st = 'ok'; break;
                     }
@@ -618,6 +617,7 @@
                 
                 if (a.rejected) {
                     allocatedToday[nome].rejected = true;
+                    allocatedToday[nome].rejectReason = a.rejectReason || "Sem justificativa";
                 } else {
                     allocatedToday[nome].count += 1;
                 }
@@ -690,8 +690,9 @@
                 
                 let count = dayData[nome].count || 0;
                 let isRejected = dayData[nome].rejected || false;
+                let reason = dayData[nome].rejectReason || "Sem justificativa";
                 
-                weekData[nome].days[dCode] = { count: count, rejected: isRejected };
+                weekData[nome].days[dCode] = { count: count, rejected: isRejected, reason: reason };
                 weekData[nome].total += count;
             });
         });
@@ -712,8 +713,10 @@
                 if (!dayObj) {
                     tbodyHtml += `<td style="text-align:center; color: #475569;">-</td>`;
                 } else if (dayObj.rejected) {
-                    // Célula Vermelha Neon indicando perda da rota
-                    tbodyHtml += `<td style="text-align:center;" class="text-neon-red">0</td>`;
+                    // Célula Vermelha Neon indicando perda da rota com Tooltip do motivo
+                    tbodyHtml += `<td style="text-align:center;" class="text-neon-red" title="Motivo: ${dayObj.reason}">
+                        0 <i class="fa-solid fa-circle-info" style="font-size: 10px; cursor: help; opacity: 0.8;"></i>
+                    </td>`;
                 } else {
                     tbodyHtml += `<td style="text-align:center; color: #10b981; font-weight: bold;">${dayObj.count}</td>`;
                 }
@@ -757,7 +760,22 @@
 
     // --- INTERAÇÕES DE REJEIÇÃO ---
     window.toggleReject = function(idx, checked) {
-        store.allocated[idx].rejected = checked;
+        if (checked) {
+            let motivo = prompt("Descreva o motivo da recusa ou perda da rota (ex: Quebrou, Recusou destino, Chegou atrasado):");
+            
+            // Se o usuário clicar em Cancelar no prompt, desfazemos a marcação visualmente
+            if (motivo === null) {
+                renderScreen(); 
+                return;
+            }
+            
+            store.allocated[idx].rejected = true;
+            store.allocated[idx].rejectReason = motivo.trim() || "Sem justificativa";
+        } else {
+            store.allocated[idx].rejected = false;
+            store.allocated[idx].rejectReason = "";
+        }
+        
         saveDayToFirebase();
         loadAndRenderHistory(db.dataCode);
     };
@@ -774,7 +792,7 @@
         if(store.routes.length === 0) return alert("Não há rotas sobrando.");
         let pulled = store.routes.map(r => ({
             rota: r.rota, at: r.at, nome: "", id: "", 
-            veic: "", letra: r.letra, rodou: "", cluster: r.cluster, litragem: r.litragem, matchType: "Manual", rejected: false
+            veic: "", letra: r.letra, rodou: "", cluster: r.cluster, litragem: r.litragem, matchType: "Manual", rejected: false, rejectReason: ""
         }));
         store.allocated = [...store.allocated, ...pulled];
         store.routes = [];
@@ -853,6 +871,7 @@
         if(cleanName === "") {
             store.allocated[idx].id = "";
             store.allocated[idx].rejected = false; // Reseta a rejeição se apagar o nome
+            store.allocated[idx].rejectReason = "";
         } else {
             if(driverMap[cleanName]) {
                 store.allocated[idx].id = driverMap[cleanName];
@@ -903,6 +922,7 @@
                 inp.value = sName;
                 store.allocated[idx].nome = sName;
                 store.allocated[idx].rejected = false; // Reseta rejeição ao mudar nome
+                store.allocated[idx].rejectReason = "";
                 
                 let k = sName.trim().toUpperCase();
                 if(driverMap[k]) store.allocated[idx].id = driverMap[k];
