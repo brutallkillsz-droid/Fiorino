@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alocação de Utilitários (Firebase + Sistema de Rejeição)</title>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- FIREBASE SDKs (Compat version para rodar direto no HTML) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <style>
+        :root {
+            --brand: #EE4D2D; 
+            --bg-body: #020617; 
+            --bg-card: #0f172a; 
+            --text-main: #f8fafc; 
+            --text-muted: #94a3b8; 
+            --border: #1e293b; 
+            --success: #10b981;
+            --glass: rgba(15, 23, 42, 0.7);
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif; 
+            background-color: var(--bg-body); 
+            margin: 0; padding: 0;
+            color: var(--text-main); min-height: 100vh;
+            background-image: radial-gradient(at 50% 0%, #1a0806 0%, #020617 80%);
+            background-attachment: fixed;
+        }
+        
+        /* HEADER */
+        .top-bar {
+            background: var(--glass);
+            backdrop-filter: blur(15px);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            padding: 15px 40px; display: flex; justify-content: space-between; align-items: center;
+            position: sticky; top: 0; z-index: 100;
+        }
+        .logo h1 { font-family: 'Montserrat', sans-serif; font-size: 18px; margin: 0; text-transform: uppercase; letter-spacing: 1px; }
+        .text-shopee { color: var(--brand); font-weight: 800; }
+        .mascot-mini { width: 30px; height: auto; margin-right: 10px; vertical-align: middle; filter: drop-shadow(0 0 5px rgba(238,77,45,0.5)); }
+
+        .btn-top-back {
+            background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255,255,255,0.1); color: #cbd5e1;
+            padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 11px; font-weight: 600;
+            display: none; align-items: center; gap: 8px; transition: 0.3s;
+        }
+        .btn-top-back:hover { background: rgba(255, 255, 255, 0.15); color: #fff; }
+
+        .container { max-width: 1750px; margin: 40px auto; padding: 0 20px 100px 20px; }
+
+        /* UPLOAD */
+        #view-upload { display: block; text-align: center; margin-top: 80px; animation: fadeIn 0.8s ease-out; }
+        
+        .hero-title {
+            font-family: 'Montserrat', sans-serif; font-size: 32px; font-weight: 800; margin-bottom: 30px;
+            background: linear-gradient(135deg, #fff 0%, #94a3b8 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            text-transform: uppercase; letter-spacing: 1px;
+        }
+
+        .upload-box {
+            background: rgba(30, 41, 59, 0.3);
+            border-radius: 24px; padding: 60px; 
+            border: 1px solid rgba(255,255,255,0.05);
+            cursor: pointer; max-width: 600px; margin: 0 auto;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative; overflow: hidden;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 20px 50px -10px rgba(0,0,0,0.5);
+        }
+        .upload-box:hover { border-color: var(--brand); transform: translateY(-5px); box-shadow: 0 30px 60px -12px rgba(238, 77, 45, 0.15); }
+        .upload-icon { font-size: 48px; color: var(--brand); margin-bottom: 20px; }
+
+        #loading-overlay {
+            display: none; margin-top: 20px; color: var(--brand); font-weight: bold; font-family: 'Montserrat';
+            animation: pulse 1.5s infinite;
+        }
+
+        .settings-area { margin-top: 30px; display: flex; justify-content: center; gap: 30px; }
+        .switch-label { font-size: 13px; color: #cbd5e1; display: flex; align-items: center; gap: 10px; cursor: pointer; user-select: none; }
+        .switch-label input { accent-color: var(--brand); transform: scale(1.1); cursor: pointer; }
+
+        /* DASHBOARD */
+        #view-dashboard { display: none; animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
+        
+        .stats-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 25px; }
+        .stat-card { 
+            background: var(--bg-card); padding: 20px; border-radius: 12px; 
+            border: 1px solid var(--border); text-align: center; 
+        }
+        .stat-val { font-size: 24px; font-weight: 700; font-family: 'Montserrat', sans-serif; }
+        .stat-lbl { font-size: 11px; color: var(--text-muted); text-transform: uppercase; margin-top: 5px; }
+
+        .tab-nav { display: flex; gap: 5px; margin-bottom: 0; }
+        .tab-btn {
+            padding: 12px 25px; background: var(--bg-card); border: 1px solid var(--border); border-bottom: none;
+            color: var(--text-muted); border-radius: 10px 10px 0 0; cursor: pointer; font-weight: 600;
+            font-size: 11px; transition: 0.2s; text-transform: uppercase;
+        }
+        .tab-btn.active { background: var(--brand); color: #fff; border-color: var(--brand); }
+        
+        .table-wrap {
+            background: var(--bg-card); border: 1px solid var(--border); border-radius: 0 12px 12px 12px;
+            padding: 0; overflow: hidden; height: 680px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); display: flex; flex-direction: column;
+        }
+        .table-scroll { overflow: auto; flex-grow: 1; position: relative; }
+        
+        table { width: 100%; border-collapse: collapse; font-size: 12px; white-space: nowrap; }
+        th { 
+            position: sticky; top: 0; background: #0b1120; color: #94a3b8; 
+            padding: 15px 12px; text-align: left; font-size: 10px; text-transform: uppercase; 
+            border-bottom: 2px solid var(--border); z-index: 10; font-weight: 700;
+        }
+        td { padding: 8px 12px; border-bottom: 1px solid var(--border); color: #e2e8f0; vertical-align: middle; }
+        tr:hover { background: rgba(238, 77, 45, 0.05) !important; }
+
+        .row-dup { background-color: rgba(30, 58, 138, 0.3) !important; box-shadow: inset 3px 0 0 #00ffff; }
+        .row-dup td { color: #a5f3fc; text-shadow: 0 0 5px rgba(0, 255, 255, 0.3); }
+
+        /* TAGS DE MATCH E CHECKBOX */
+        .tag-fixo { background: rgba(16, 185, 129, 0.2); color: #34d399; padding: 4px 8px; border-radius: 4px; font-weight: 700; font-size: 10px; border: 1px solid rgba(16, 185, 129, 0.3); }
+        .tag-curinga { background: rgba(168, 85, 247, 0.2); color: #c084fc; padding: 4px 8px; border-radius: 4px; font-weight: 700; font-size: 10px; border: 1px solid rgba(168, 85, 247, 0.3); }
+        
+        /* NOVO: ESTILOS PARA REJEIÇÃO */
+        .checkbox-reject { accent-color: #ff003c; width: 16px; height: 16px; cursor: pointer; }
+        .text-neon-red {
+            color: #ff003c !important;
+            text-shadow: 0 0 10px rgba(255, 0, 60, 0.8), 0 0 20px rgba(255, 0, 60, 0.4);
+            font-weight: 900; font-size: 15px;
+        }
+
+        /* FOOTER */
+        .footer-bar {
+            position: fixed; bottom: 0; left: 0; width: 100%; 
+            background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(10px);
+            padding: 15px 30px; border-top: 1px solid var(--border); display: flex; justify-content: center;
+            align-items: center; z-index: 2000; box-shadow: 0 -10px 40px rgba(0,0,0,0.5);
+        }
+        
+        .btn-copy {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white; border: none; padding: 12px 30px; border-radius: 8px; font-weight: 700; font-size: 12px; 
+            cursor: pointer; display: flex; align-items: center; gap: 8px; text-transform: uppercase;
+            box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3); transition: 0.3s;
+        }
+        .btn-copy:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(37, 99, 235, 0.5); }
+
+        .btn-add-driver {
+            background: #10b981; color: white; border: none; padding: 12px 25px; border-radius: 8px; font-weight: 700; font-size: 12px; 
+            cursor: pointer; display: flex; align-items: center; gap: 8px; text-transform: uppercase; margin-right: 15px;
+        }
+        .btn-add-driver:hover { background: #059669; transform: translateY(-2px); }
+
+        .btn-pull-area { padding: 15px; background: #0b1120; border-top: 1px solid var(--border); text-align: center; }
+        .btn-pull {
+            background: rgba(245, 158, 11, 0.1); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3);
+            padding: 10px 25px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 11px; 
+            width: 100%; transition: 0.2s; text-transform: uppercase; letter-spacing: 1px;
+        }
+        .btn-pull:hover { background: rgba(245, 158, 11, 0.2); border-color: #fbbf24; }
+
+        .hidden { display: none !important; }
+        .edit-input { background: transparent; border: 1px solid transparent; color: #fff; width: 100%; padding: 6px; font-size: 12px; border-radius: 4px; }
+        .edit-input:focus { border-color: var(--brand); background: rgba(238, 77, 45, 0.1); outline: none; }
+        .input-manual { border: 1px solid rgba(245, 158, 11, 0.3) !important; background: rgba(245, 158, 11, 0.02); }
+
+        .btn-del { background: rgba(239, 68, 68, 0.1); border: none; color: #ef4444; cursor: pointer; padding: 6px; border-radius: 4px; font-size: 12px; transition: 0.2s; }
+        .btn-del:hover { background: #ef4444; color: white; }
+
+        /* CUSTOM POPUP */
+        .custom-popup {
+            position: absolute; background: #1e293b; border: 1px solid #334155;
+            width: 380px; max-height: 250px; overflow-y: auto; z-index: 9999;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.6); border-radius: 8px; font-size: 11px;
+        }
+        .popup-item { padding: 10px 15px; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center; transition: 0.1s; }
+        .popup-item:hover { background: var(--brand); color: white !important; }
+        .status-free { color: #fff; font-weight: 600; border-left: 3px solid #10b981; background: linear-gradient(90deg, rgba(16,185,129,0.1) 0%, transparent 100%); }
+        .status-busy { color: #64748b; }
+        .badge-free { background: #10b981; color: #000; padding: 2px 6px; border-radius: 4px; font-size: 9px; font-weight: 800; text-transform: uppercase; }
+
+        /* MODAL */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); backdrop-filter: blur(5px);
+            z-index: 3000; display: flex; justify-content: center; align-items: center;
+        }
+        .modal-box {
+            background: #1e293b; border: 1px solid #334155; border-radius: 12px;
+            padding: 30px; width: 400px; text-align: center;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+        .modal-box h3 { margin: 0 0 20px 0; color: #fff; }
+        .modal-input {
+            width: 100%; background: #0f172a; border: 1px solid #334155; color: #fff;
+            padding: 10px; margin-bottom: 10px; border-radius: 6px; box-sizing: border-box;
+        }
+        .modal-actions { display: flex; gap: 10px; justify-content: center; margin-top: 10px; }
+
+        @keyframes fadeIn { from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);} }
+        @keyframes slideUp { from{transform:translateY(40px);opacity:0} to{transform:translateY(0);opacity:1} }
+        @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
+    </style>
+</head>
+<body>
+
+<div class="top-bar">
+    <div style="display:flex; align-items:center;">
+        <img src="shopee_pet.png" class="mascot-mini" onerror="this.style.display='none'">
+        <div class="logo"><h1>Sistema <span class="text-shopee">Shopee</span></h1></div>
+    </div>
+    <div style="display:flex; align-items:center; gap: 15px;">
+        <div id="file-info" style="font-size:11px; color:#94a3b8; font-weight:500;">Aguardando...</div>
+        <button id="btn-top-back" class="btn-top-back" onclick="window.location.reload()">
+            <i class="fa-solid fa-rotate-left"></i> Voltar / Importar
+        </button>
+    </div>
+</div>
+
+<div class="container">
+    <div id="view-upload">
+        <h1 class="hero-title">Alocação Automática de Utilitários</h1>
+        
+        <div class="upload-box" onclick="document.getElementById('upl').click()">
+            <i class="fa-solid fa-cloud-arrow-up upload-icon"></i>
+            <h2 style="margin:0 0 10px 0; font-size: 18px; font-weight:700;">Clique para Importar Planilha</h2>
+            <p style="margin:0; color:#94a3b8; font-size: 12px;">Visual de Clusters 100% do Arquivo</p>
+            <input type="file" id="upl" accept=".xlsx" style="display:none">
+        </div>
+        
+        <div id="loading-overlay"><i class="fa-solid fa-microchip"></i> PROCESSANDO MATCH PRECISO...</div>
+
+        <div class="settings-area">
+            <label class="switch-label"><input type="checkbox" id="checkRodizio" checked> Rodízio Aleatório</label>
+            <label class="switch-label"><input type="checkbox" id="checkAll" checked> Utilizar Curingas (All)</label>
+        </div>
+        
+        <!-- NOVO: BOTÃO DE ACESSO DIRETO AO HISTÓRICO -->
+        <div style="text-align: center; margin-top: 40px;">
+            <button class="btn-top-back" style="display:inline-flex; font-size: 13px; padding: 12px 25px; border-color: var(--brand); color: #fff;" onclick="viewGlobalHistory()">
+                <i class="fa-solid fa-calendar-days"></i> Consultar Histórico Geral (Online)
+            </button>
+        </div>
+        
+        <div id="debug-log" style="margin-top:20px; color:#64748b; font-family:monospace; font-size:10px;"></div>
+    </div>
+
+    <div id="view-dashboard">
+        <div class="stats-bar">
+            <div class="stat-card"><div class="stat-val" style="color:var(--success)" id="v-alloc">0</div><div class="stat-lbl">Alocados</div></div>
+            <div class="stat-card"><div class="stat-val" style="color:#f59e0b" id="v-pend">0</div><div class="stat-lbl">Pendentes</div></div>
+            <div class="stat-card"><div class="stat-val" style="color:#3b82f6" id="v-free">0</div><div class="stat-lbl">Livres</div></div>
+            <div class="stat-card"><div class="stat-val" style="color:#ef4444" id="v-ign">0</div><div class="stat-lbl">Ignorados</div></div>
+        </div>
+
+        <div class="tab-nav">
+            <button class="tab-btn active" onclick="nav('t1', this)">✅ ALOCADOS</button>
+            <button class="tab-btn" onclick="nav('t2', this)">⚠️ SOBRAS</button>
+            <button class="tab-btn" onclick="nav('t3', this)">🚚 LIVRES</button>
+            <button class="tab-btn" onclick="nav('t4', this)">📊 HISTÓRICO</button>
+        </div>
+
+        <div class="table-wrap">
+            <div class="table-scroll">
+                <table id="t1">
+                    <thead><tr>
+                        <th style="width: 40px; text-align:center;">Del</th>
+                        <th style="width: 30px; text-align:center;">#</th>
+                        <th style="width: 60px; text-align:center; color:#ef4444;">Recusou</th>
+                        <th style="width: 70px;">Rota AT</th>
+                        <th style="width: 100px;">AT / TO</th>
+                        <th style="width: 60px; color: #a5f3fc;">Litragem</th>
+                        <th style="width: 360px;">Nome Motorista (Popup Auto)</th>
+                        <th style="width: 80px;">ID</th>
+                        <th>Veículo</th>
+                        <th style="color: #fbbf24;">Letra</th>
+                        <th style="width: 90px;">Tipo Match</th>
+                        <th style="color:var(--success)">Cluster (Do Arquivo)</th>
+                    </tr></thead>
+                    <tbody id="b-alocados"></tbody>
+                </table>
+
+                <table id="t2" class="hidden">
+                    <thead><tr><th>Rota AT</th><th>AT Completa</th><th>Litragem</th><th>Letra</th><th>Cluster Necessário</th></tr></thead>
+                    <tbody id="b-rotas"></tbody>
+                </table>
+
+                <table id="t3" class="hidden">
+                    <thead><tr><th>Nome Motorista</th><th>ID</th><th>Veículo</th><th>Clusters</th></tr></thead>
+                    <tbody id="b-mot"></tbody>
+                </table>
+
+                <table id="t4" class="hidden">
+                    <thead id="h-historico"></thead>
+                    <tbody id="b-historico"></tbody>
+                </table>
+            </div>
+            
+            <div id="pull-area" class="btn-pull-area">
+                <button class="btn-pull" onclick="pullRemainingRoutes()">
+                    <i class="fa-solid fa-arrow-down"></i> PUXAR ROTAS SOBRANDO
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="footer-bar hidden" id="footer-actions">
+    <button class="btn-add-driver" onclick="openAddDriver()">
+        <i class="fa-solid fa-user-plus"></i> + Motorista
+    </button>
+    <button class="btn-copy" onclick="copyCombined(this)">
+        <i class="fa-regular fa-copy"></i> Copiar ID e AT
+    </button>
+</div>
+
+<div id="add-modal" class="modal-overlay hidden">
+    <div class="modal-box">
+        <h3>Adicionar Novo Motorista</h3>
+        <input id="new-name" class="modal-input" placeholder="Nome Completo">
+        <input id="new-id" class="modal-input" placeholder="ID Shopee">
+        <input id="new-veic" class="modal-input" placeholder="Veículo (Ex: VUC, FIORINO)">
+        <div class="modal-actions">
+            <button class="btn btn-sec" onclick="closeAddDriver()">Cancelar</button>
+            <button class="btn btn-primary" onclick="confirmAddDriver()">Salvar e Enviar para Livres</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // =====================================================================
+    // CONFIGURAÇÃO DO FIREBASE SPX LOGISTICA
+    // =====================================================================
+    const firebaseConfig = {
+        apiKey: "AIzaSyBxzyFdum86noYdpQnldyjX4wiPB7IJEMY",
+        authDomain: "spx-logistica-online.firebaseapp.com",
+        databaseURL: "https://spx-logistica-online-default-rtdb.firebaseio.com",
+        projectId: "spx-logistica-online",
+        storageBucket: "spx-logistica-online.firebasestorage.app",
+        messagingSenderId: "347761759499",
+        appId: "1:347761759499:web:c257117806c2496fe77e0e"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+    // =====================================================================
+
+    let store = { allocated: [], routes: [], drivers: [], filename: "" };
+    let db = { dataCode: "" };
+    let driverMap = {}; 
+    let allDriversList = []; 
+
+    const cleanBasic = t => String(t||"").toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim();
+    
+    function getTokens(str) {
+        if(!str) return [];
+        let s = cleanBasic(str);
+        let rawParts = s.split(/[\;\,\|\/\-\n\r]/); 
+        let tokens = [];
+        for(let p of rawParts) {
+            let t = p.trim().replace(/^[^A-Z0-9]+|[^A-Z0-9]+$/g, "");
+            if(t.length > 2) tokens.push(t);
+        }
+        return tokens;
+    }
+
+    const isAll = c => {
+        let t = cleanBasic(c);
+        return ['ALL','TODOS','TODAS','QUALQUER','CURINGA'].some(k => t.includes(k));
+    };
+    
+    const shuffle = a => a.sort(()=>Math.random()-0.5);
+
+    function getJsDate(cell) {
+        if(!cell || !cell.v) return new Date();
+        if(cell.v instanceof Date) return cell.v;
+        let p = String(cell.v).trim().split(/[\/\-\.]/);
+        if(p.length===3) return new Date(p[2], p[1]-1, p[0]);
+        return new Date();
+    }
+    function getDateCode(d) { return `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`; }
+    function formatDate(d) { return `${String(d.getDate()).padStart(2,'0')}-${String(d.getMonth()+1).padStart(2,'0')}-${d.getFullYear()}`; }
+
+    function findHeaderRow(ws) {
+        let range = XLSX.utils.decode_range(ws['!ref']);
+        for(let R=range.s.r; R<= Math.min(range.e.r, 15); ++R) {
+            for(let C=range.s.c; C<=range.e.c; ++C) {
+                let cell = ws[XLSX.utils.encode_cell({r:R, c:C})];
+                if(cell && cell.v) {
+                    let v = String(cell.v).toLowerCase();
+                    if(v.includes("rota") || v.includes("at /") || v.includes("motorista")) return R;
+                }
+            }
+        }
+        return 0;
+    }
+
+    function mapColumns(ws, rowIdx) {
+        let map = { rotaAt:'A', atTo:'B', letra:'C', clusterR:'F', litragem:'T', nome:'A', id:'C', clusterM:'E', veic:'G', rodou:'B' };
+        let range = XLSX.utils.decode_range(ws['!ref']);
+        for(let C=range.s.c; C<=range.e.c; ++C) {
+            let cell = ws[XLSX.utils.encode_cell({r:rowIdx, c:C})];
+            if(!cell || !cell.v) continue;
+            let h = String(cell.v).toLowerCase();
+            let colLet = XLSX.utils.encode_col(C);
+
+            if(h.includes("rota") && !h.includes("at")) map.rotaAt = colLet;
+            if(h.includes("at /") || h.includes("at/to")) map.atTo = colLet;
+            if(h.includes("letra") || h.includes("rota id")) map.letra = colLet;
+            if(h.includes("cidade") || h.includes("destino") || h.includes("municipio") || h.includes("endereço") || h.includes("cluster")) map.clusterR = colLet;
+            if(h.includes("litragem") || h.includes("volume") || h.includes("cubagem") || h.includes("vol.")) map.litragem = colLet;
+            if(h.includes("nome")) map.nome = colLet;
+            if(h.includes("id") && !h.includes("rota")) map.id = colLet;
+            if(h.includes("cluster") || h.includes("preferencia")) map.clusterM = colLet;
+            if(h.includes("veiculo") || h.includes("veículo")) map.veic = colLet;
+            if(h.includes("rodou")) map.rodou = colLet;
+        }
+        return map;
+    }
+
+    document.getElementById('upl').addEventListener('change', function(e) {
+        if(!e.target.files[0]) return;
+        store = { allocated: [], routes: [], drivers: [], filename: "" };
+        driverMap = {}; allDriversList = [];
+        document.getElementById('b-alocados').innerHTML = "";
+        document.getElementById('loading-overlay').style.display = 'block'; 
+        
+        const r = new FileReader();
+        r.onload = function(evt) {
+            setTimeout(() => { 
+                try {
+                    const wb = XLSX.read(evt.target.result, {type: 'array', cellDates: true});
+                    const sR = wb.SheetNames.find(n => n.match(/romaneio/i));
+                    const sM = wb.SheetNames.find(n => n.match(/motorista/i));
+
+                    if(sR && sM) {
+                        const wsR = wb.Sheets[sR]; const wsM = wb.Sheets[sM];
+                        let dateObj = getJsDate(wsM['A2']);
+                        db.dataCode = getDateCode(dateObj);
+                        store.filename = `Atribuição ${formatDate(dateObj)}.xlsx`;
+                        document.getElementById('file-info').innerHTML = `Data Base: <b>${formatDate(dateObj)}</b>`;
+
+                        let rowR = findHeaderRow(wsR);
+                        let mapR = mapColumns(wsR, rowR);
+                        let rowM = findHeaderRow(wsM);
+                        let mapM = mapColumns(wsM, rowM);
+
+                        document.getElementById('debug-log').innerHTML = `Litragem: Col ${mapR.litragem} | Cluster Base: Col ${mapR.clusterR}`;
+
+                        let rawRom = XLSX.utils.sheet_to_json(wsR, {header: "A", range: rowR + 1});
+                        let rawMot = XLSX.utils.sheet_to_json(wsM, {header: "A", range: rowM + 1});
+
+                        runEngine(rawRom, rawMot, mapR, mapM);
+                        renderScreen();
+
+                    } else { alert("Erro: Abas não encontradas."); }
+                } catch (err) { alert("Erro: " + err.message); }
+                document.getElementById('loading-overlay').style.display = 'none';
+            }, 100);
+        };
+        r.readAsArrayBuffer(e.target.files[0]);
+        e.target.value = '';
+    });
+
+    function runEngine(rom, mot, mapR, mapM) {
+        let rotasValidas = [];
+        let ignored = 0;
+        
+        let ckRod = document.getElementById('checkRodizio');
+        let ckAll = document.getElementById('checkAll');
+        let useRodizio = ckRod ? ckRod.checked : true;
+        let useAll = ckAll ? ckAll.checked : true;
+
+        rom.forEach(r => {
+            if(!r['A']) return;
+            let atCode = String(r['B']||"").toUpperCase();
+            if(atCode.includes(db.dataCode)) {
+                let rId = String(r[mapR.rotaAt] || "");
+                if(!rId.toLowerCase().includes("rota") && rId.length > 0) rId = "Rota " + rId;
+                let letraVal = String(r['C'] || r[mapR.letra] || "");
+                let litVal = String(r[mapR.litragem] || "-");
+                let clusterReal = String(r[mapR.clusterR]||r['F']||""); 
+
+                rotasValidas.push({
+                    raw: r, id: rId, at: r[mapR.atTo], letra: letraVal,
+                    cluster: clusterReal, st: 'pendente',
+                    litragem: litVal
+                });
+            }
+        });
+
+        let frota = [];
+        mot.forEach(m => {
+            let v = String(m[mapM.veic]||"").toUpperCase();
+            let nome = String(m[mapM.nome]||"").trim().toUpperCase();
+            let nomeReal = String(m[mapM.nome]||"").trim();
+            let id = String(m[mapM.id]||"");
+
+            if(nome.length > 2 && !v.includes("MOTO")) {
+                driverMap[nome] = id;
+                allDriversList.push(nomeReal);
+            }
+
+            if(v.includes("MOTO") || v.includes("PASSEIO")) { ignored++; return; }
+            let aceito = false;
+            if(v.includes("FIORINO") || v.includes("VAN") || v.includes("VUC") || v.includes("UTILITARIO") || v.includes("ENTREGA")) aceito = true;
+
+            if(aceito && String(m[mapM.clusterM]).length > 1) {
+                frota.push({
+                    nome: m[mapM.nome], id: m[mapM.id], cluster: String(m[mapM.clusterM]||""),
+                    veic: v, rodou: String(m[mapM.rodou]||"Não"), isAll: isAll(String(m[mapM.clusterM]||"")), disp: true
+                });
+            }
+        });
+
+        if(useRodizio) shuffle(frota); 
+
+        const checkDeepMatch = (motCluster, rotCluster) => {
+            let motTokens = getTokens(motCluster);
+            let rotTokens = getTokens(rotCluster);
+            for (let mToken of motTokens) {
+                if (rotTokens.includes(mToken)) return mToken;
+            }
+            return null;
+        };
+
+        const runMatch = (forceAll) => {
+            rotasValidas.forEach(r => {
+                if(r.st === 'ok') return;
+                for(let m of frota) {
+                    if(!m.disp) continue;
+                    if(m.isAll !== forceAll) continue;
+                    
+                    let match = false;
+                    let type = "";
+                    
+                    if(forceAll) { 
+                        match = true; 
+                        type = "Curinga";
+                    } 
+                    else {
+                        let cMatch = checkDeepMatch(m.cluster, r.cluster);
+                        if(cMatch) { 
+                            match = true; 
+                            type = "Fixo";
+                        }
+                    }
+
+                    if(match) {
+                        store.allocated.push({
+                            rota: r.id, at: r.at, nome: m.nome, id: m.id, 
+                            veic: m.veic, letra: r.letra, rodou: m.rodou, 
+                            cluster: r.cluster, litragem: r.litragem, matchType: type,
+                            rejected: false // Inicializa como falso
+                        });
+                        m.disp = false; r.st = 'ok'; break;
+                    }
+                }
+            });
+        };
+
+        runMatch(false); 
+        if(useAll) runMatch(true);
+
+        rotasValidas.forEach(r => {
+            if(r.st !== 'ok') store.routes.push({ rota: r.id, at: r.at, letra: r.letra, cluster: r.cluster, litragem: r.litragem });
+        });
+        
+        frota.forEach(m => {
+            if(m.disp) store.drivers.push({ nome: m.nome, id: m.id, veic: m.veic, cluster: m.cluster });
+        });
+
+        updateStats(ignored);
+    }
+
+    function openAddDriver() {
+        document.getElementById('add-modal').classList.remove('hidden');
+        document.getElementById('new-name').value = '';
+        document.getElementById('new-id').value = '';
+        document.getElementById('new-veic').value = '';
+    }
+    function closeAddDriver() { document.getElementById('add-modal').classList.add('hidden'); }
+    
+    function confirmAddDriver() {
+        let name = document.getElementById('new-name').value.trim();
+        let id = document.getElementById('new-id').value.trim();
+        let veic = document.getElementById('new-veic').value.trim() || "MANUAL";
+        
+        if(name.length < 3 || id.length < 1) return alert("Preencha Nome e ID corretamente.");
+        
+        driverMap[name.toUpperCase()] = id;
+        allDriversList.push(name);
+        store.drivers.push({ nome: name, id: id, veic: veic, cluster: "MANUAL" });
+        
+        closeAddDriver();
+        renderScreen();
+        updateStats(0);
+        alert("Motorista adicionado aos Livres!");
+    }
+
+    // =====================================================================
+    // LÓGICA DE SALVAMENTO NO FIREBASE
+    // =====================================================================
+    window.saveDayToFirebase = function() {
+        if (!db.dataCode || store.allocated.length === 0) return; // Só salva se houver dados importados
+
+        let allocatedToday = {};
+        store.allocated.forEach(a => {
+            let nome = a.nome.trim().toUpperCase();
+            if (nome && nome.length > 2 && nome !== "MANUAL") {
+                if (!allocatedToday[nome]) allocatedToday[nome] = { id: a.id, count: 0, rejected: false };
+                
+                if (a.rejected) {
+                    allocatedToday[nome].rejected = true;
+                } else {
+                    allocatedToday[nome].count += 1;
+                }
+            }
+        });
+        
+        // Salva silenciosamente no Firebase
+        database.ref('shopee_history/' + db.dataCode).set(allocatedToday);
+    }
+
+    // =====================================================================
+    // LÓGICA DE LEITURA DO HISTÓRICO ONLINE (EVITA TRAVAMENTO)
+    // =====================================================================
+    window.loadAndRenderHistory = async function(baseDateCode) {
+        if (!baseDateCode) return;
+
+        let refYear = parseInt(baseDateCode.substring(0,4));
+        let refMonth = parseInt(baseDateCode.substring(4,6)) - 1;
+        let refDay = parseInt(baseDateCode.substring(6,8));
+        let refDate = new Date(refYear, refMonth, refDay);
+        
+        let dayOfWeek = refDate.getDay(); 
+        let diffToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek; 
+        let mondayDate = new Date(refDate);
+        mondayDate.setDate(refDate.getDate() + diffToMonday);
+
+        let weekDates = [];
+        let weekHeaders = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
+        let theadHtml = `<tr><th>Nome Motorista</th><th>ID</th>`;
+        
+        for(let i=0; i<7; i++) {
+            let d = new Date(mondayDate);
+            d.setDate(mondayDate.getDate() + i);
+            
+            let dCode = `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
+            let dDisplay = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`;
+            weekDates.push(dCode);
+            
+            let isToday = (dCode === baseDateCode) ? 'color: #fff; border-bottom: 2px solid var(--brand);' : '';
+            theadHtml += `<th style="text-align:center; ${isToday}">${weekHeaders[i]}<br><span style="font-size:9px; color:#94a3b8;">${dDisplay}</span></th>`;
+        }
+        theadHtml += `<th style="color:var(--brand); text-align:center;">Total</th></tr>`;
+        document.getElementById('h-historico').innerHTML = theadHtml;
+
+        document.getElementById('b-historico').innerHTML = `<tr><td colspan="10" style="text-align:center; color: var(--brand); font-weight:bold; padding: 20px;"><i class="fa-solid fa-spinner fa-spin"></i> Sincronizando com Banco de Dados...</td></tr>`;
+
+        // Busca apenas as 7 datas exatas
+        let historyFromFirebase = {};
+        try {
+            let fetchPromises = weekDates.map(dCode => database.ref('shopee_history/' + dCode).once('value'));
+            let snapshots = await Promise.all(fetchPromises);
+            
+            snapshots.forEach((snap, index) => {
+                if (snap.exists()) {
+                    historyFromFirebase[weekDates[index]] = snap.val();
+                }
+            });
+        } catch (error) {
+            console.error("Erro Firebase:", error);
+            document.getElementById('b-historico').innerHTML = `<tr><td colspan="10" style="text-align:center; color: #ef4444;">Erro ao carregar histórico. Verifique a conexão.</td></tr>`;
+            return;
+        }
+
+        // Agrupa Dados
+        let weekData = {};
+        weekDates.forEach(dCode => {
+            let dayData = historyFromFirebase[dCode] || {};
+            Object.keys(dayData).forEach(nome => {
+                if (!weekData[nome]) weekData[nome] = { id: dayData[nome].id, days: {}, total: 0 };
+                
+                let count = dayData[nome].count || 0;
+                let isRejected = dayData[nome].rejected || false;
+                
+                weekData[nome].days[dCode] = { count: count, rejected: isRejected };
+                weekData[nome].total += count;
+            });
+        });
+
+        // Ordena Tabela
+        let sortedDrivers = Object.keys(weekData)
+            .map(nome => ({ nome, id: weekData[nome].id, days: weekData[nome].days, total: weekData[nome].total }))
+            .sort((a, b) => b.total - a.total);
+
+        let tbodyHtml = "";
+        sortedDrivers.forEach(d => {
+            tbodyHtml += `<tr>
+                <td style="font-weight:600; color:#fff;">${d.nome}</td>
+                <td>${d.id}</td>`;
+            
+            weekDates.forEach(dCode => {
+                let dayObj = d.days[dCode];
+                if (!dayObj) {
+                    tbodyHtml += `<td style="text-align:center; color: #475569;">-</td>`;
+                } else if (dayObj.rejected) {
+                    // Célula Vermelha Neon indicando perda da rota
+                    tbodyHtml += `<td style="text-align:center;" class="text-neon-red">0</td>`;
+                } else {
+                    tbodyHtml += `<td style="text-align:center; color: #10b981; font-weight: bold;">${dayObj.count}</td>`;
+                }
+            });
+
+            tbodyHtml += `<td style="color:var(--brand); font-size:14px; font-weight:800; text-align:center;">${d.total}</td>
+            </tr>`;
+        });
+        
+        document.getElementById('b-historico').innerHTML = tbodyHtml || `<tr><td colspan="10" style="text-align:center;">Nenhum dado encontrado no Firebase para esta semana.</td></tr>`;
+    }
+
+    // =====================================================================
+    // ACESSO DIRETO AO HISTÓRICO GERAL DA TELA INICIAL
+    // =====================================================================
+    window.viewGlobalHistory = function() {
+        document.getElementById('view-upload').style.display = 'none';
+        document.getElementById('view-dashboard').style.display = 'block';
+        document.getElementById('btn-top-back').style.display = 'flex';
+        
+        // Esconde tudo que não é o histórico
+        document.querySelector('.stats-bar').style.display = 'none';
+        document.getElementById('pull-area').style.display = 'none';
+        document.getElementById('footer-actions').classList.add('hidden');
+        document.querySelectorAll('table').forEach(t => t.classList.add('hidden'));
+        document.getElementById('t4').classList.remove('hidden');
+        
+        // Esconde as abas de trabalho e deixa só o botão do histórico ativo
+        document.querySelectorAll('.tab-btn').forEach(b => b.style.display = 'none');
+        let histBtn = document.querySelector('.tab-nav button:nth-child(4)');
+        histBtn.style.display = 'block';
+        histBtn.classList.add('active');
+        document.getElementById('file-info').innerHTML = `Visualizando: <b>Histórico Geral</b>`;
+
+        // Pega a data de HOJE para basear a semana
+        let today = new Date();
+        let todayCode = `${today.getFullYear()}${String(today.getMonth()+1).padStart(2,'0')}${String(today.getDate()).padStart(2,'0')}`;
+        
+        loadAndRenderHistory(todayCode);
+    }
+
+    // --- INTERAÇÕES DE REJEIÇÃO ---
+    window.toggleReject = function(idx, checked) {
+        store.allocated[idx].rejected = checked;
+        saveDayToFirebase();
+        loadAndRenderHistory(db.dataCode);
+    };
+
+    // --- UI ---
+    function updateStats(ign) {
+        document.getElementById('v-alloc').innerText = store.allocated.length;
+        document.getElementById('v-pend').innerText = store.routes.length;
+        document.getElementById('v-free').innerText = store.drivers.length;
+        if(ign > 0) document.getElementById('v-ign').innerText = ign;
+    }
+
+    window.pullRemainingRoutes = function() {
+        if(store.routes.length === 0) return alert("Não há rotas sobrando.");
+        let pulled = store.routes.map(r => ({
+            rota: r.rota, at: r.at, nome: "", id: "", 
+            veic: "", letra: r.letra, rodou: "", cluster: r.cluster, litragem: r.litragem, matchType: "Manual", rejected: false
+        }));
+        store.allocated = [...store.allocated, ...pulled];
+        store.routes = [];
+        renderScreen();
+        updateStats(0);
+    }
+
+    function renderScreen() {
+        document.getElementById('view-upload').style.display = 'none';
+        document.getElementById('view-dashboard').style.display = 'block';
+        document.getElementById('footer-actions').style.display = 'flex';
+        document.getElementById('footer-actions').classList.remove('hidden');
+        document.getElementById('btn-top-back').style.display = 'flex';
+
+        let nameCount = {};
+        let idCount = {};
+        store.allocated.forEach(r => {
+            if(r.nome && r.nome.length > 2) nameCount[r.nome] = (nameCount[r.nome] || 0) + 1;
+            if(r.id && r.id.length > 1) idCount[r.id] = (idCount[r.id] || 0) + 1;
+        });
+
+        let h1 = "";
+        store.allocated.forEach((r,i) => {
+            let cls = r.nome === "" ? "edit-input input-manual" : "edit-input";
+            let isDup = (nameCount[r.nome] > 1) || (idCount[r.id] > 1);
+            let rowClass = isDup ? "row-dup" : "";
+            
+            let mTag = "";
+            if(r.matchType === "Fixo") mTag = `<span class="tag-fixo">🎯 Fixo</span>`;
+            else if(r.matchType === "Curinga") mTag = `<span class="tag-curinga">🃏 Curinga</span>`;
+            else mTag = `<span style="color:#64748b; font-size:10px;">Manual</span>`;
+
+            h1 += `<tr class="${rowClass}">
+                <td style="text-align:center"><button class="btn-del" onclick="delRow(${i})"><i class="fa-solid fa-trash"></i></button></td>
+                <td style="text-align:center; color:#64748b; font-size:10px;">${i+1}</td>
+                <td style="text-align:center;">
+                    <input type="checkbox" class="checkbox-reject" ${r.rejected ? 'checked' : ''} onchange="toggleReject(${i}, this.checked)">
+                </td>
+                <td>${r.rota}</td><td>${r.at}</td>
+                <td style="color:#a5f3fc; text-align:center;">${r.litragem || '-'}</td>
+                <td style="position:relative;">
+                    <input class="${cls}" value="${r.nome}" 
+                           onclick="onInputName(${i}, this)" 
+                           oninput="onInputName(${i}, this)" 
+                           onchange="onNameChange(${i}, this.value)"
+                           placeholder="Digite nome..." autocomplete="off">
+                </td>
+                <td><input class="${cls}" id="id-${i}" value="${r.id}" readonly></td>
+                <td>${r.veic}</td><td>${r.letra}</td>
+                <td style="text-align:center;">${mTag}</td>
+                <td style="color:#10b981; font-weight:700;">${r.cluster}</td>
+            </tr>`;
+        });
+        document.getElementById('b-alocados').innerHTML = h1;
+
+        let h2 = "";
+        store.routes.forEach(r => { h2 += `<tr><td>${r.rota}</td><td>${r.at}</td><td>${r.litragem}</td><td>${r.letra}</td><td style="color:#f59e0b;">${r.cluster}</td></tr>`; });
+        document.getElementById('b-rotas').innerHTML = h2;
+
+        let h3 = "";
+        store.drivers.forEach(m => { h3 += `<tr><td>${m.nome}</td><td>${m.id}</td><td>${m.veic}</td><td>${m.cluster}</td></tr>`; });
+        document.getElementById('b-mot').innerHTML = h3;
+
+        saveDayToFirebase();
+        loadAndRenderHistory(db.dataCode);
+    }
+
+    function checkFree(name) { return store.drivers.some(d => d.nome.toUpperCase() === name.toUpperCase()); }
+
+    window.onNameChange = function(idx, val) {
+        let cleanName = val.trim().toUpperCase();
+        let oldName = store.allocated[idx].nome;
+        if(oldName && oldName.toUpperCase() !== cleanName) recycleDriver(oldName);
+        store.allocated[idx].nome = val;
+        
+        if(cleanName === "") {
+            store.allocated[idx].id = "";
+            store.allocated[idx].rejected = false; // Reseta a rejeição se apagar o nome
+        } else {
+            if(driverMap[cleanName]) {
+                store.allocated[idx].id = driverMap[cleanName];
+                consumeFreeDriver(cleanName);
+            } else {
+                store.allocated[idx].id = ""; 
+            }
+        }
+        renderScreen();
+    }
+
+    window.onInputName = function(idx, inp) {
+        let val = inp.value;
+        closeAllLists();
+        
+        let a = document.createElement("DIV");
+        a.className = "custom-popup";
+        a.style.top = (inp.offsetTop + inp.offsetHeight) + "px";
+        a.style.left = inp.offsetLeft + "px";
+        a.style.width = inp.offsetWidth + "px";
+        inp.parentNode.appendChild(a);
+
+        let matches = [];
+        if(!val) { matches = allDriversList; } 
+        else { matches = allDriversList.filter(d => d.toUpperCase().includes(val.toUpperCase())); }
+
+        matches.sort((a,b) => {
+            let freeA = checkFree(a) ? 1 : 0;
+            let freeB = checkFree(b) ? 1 : 0;
+            return freeB - freeA;
+        });
+
+        let count = 0;
+        let limit = 100;
+
+        for(let i=0; i<matches.length; i++) {
+            let sName = matches[i];
+            let isFree = checkFree(sName);
+            let b = document.createElement("DIV");
+            b.className = isFree ? "popup-item status-free" : "popup-item status-busy";
+            b.innerHTML = `<span>${sName}</span>` + (isFree ? " <span class='badge-free'>LIVRE</span>" : "");
+            
+            b.addEventListener("mousedown", function(e) {
+                e.preventDefault();
+                let oldName = store.allocated[idx].nome;
+                if(oldName) recycleDriver(oldName);
+
+                inp.value = sName;
+                store.allocated[idx].nome = sName;
+                store.allocated[idx].rejected = false; // Reseta rejeição ao mudar nome
+                
+                let k = sName.trim().toUpperCase();
+                if(driverMap[k]) store.allocated[idx].id = driverMap[k];
+                
+                consumeFreeDriver(k);
+                renderScreen();
+                closeAllLists();
+            });
+            a.appendChild(b);
+            count++; if(count > limit) break;
+        }
+    }
+
+    function recycleDriver(name) {
+        if(!name || name.length < 2) return;
+        let key = name.toUpperCase();
+        if(driverMap[key]) {
+            let exists = store.drivers.some(d => d.nome.toUpperCase() === key);
+            if(!exists) {
+                store.drivers.push({ nome: name, id: driverMap[key], veic: "Reciclado", cluster: "Reciclado" });
+            }
+        }
+    }
+
+    function consumeFreeDriver(nameKey) {
+        let freeIdx = store.drivers.findIndex(d => d.nome.toUpperCase() === nameKey);
+        if(freeIdx > -1) { store.drivers.splice(freeIdx, 1); }
+    }
+
+    function closeAllLists() {
+        let x = document.getElementsByClassName("custom-popup");
+        for (let i = 0; i < x.length; i++) x[i].parentNode.removeChild(x[i]);
+    }
+    
+    document.addEventListener("mousedown", function(e) { 
+        if(!e.target.classList.contains('edit-input') && !e.target.closest('.custom-popup')) {
+            closeAllLists(); 
+        }
+    });
+
+    window.copyCombined = function(btn) {
+        let text = store.allocated.map(r => `${r.id || ""}\t${r.at || ""}`).join('\n');
+        navigator.clipboard.writeText(text).then(() => {
+            let original = btn.innerHTML;
+            btn.innerHTML = "<i class='fa-solid fa-check'></i> Copiado!";
+            btn.style.background = "#10b981";
+            setTimeout(() => { btn.innerHTML = original; btn.style.background = "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)"; }, 2000);
+        });
+    }
+
+    window.delRow = function(idx) {
+        let row = store.allocated[idx];
+        if(row.nome) recycleDriver(row.nome);
+        store.allocated.splice(idx, 1);
+        renderScreen();
+        updateStats(0);
+    };
+
+    window.nav = function(id, btn) {
+        document.querySelectorAll('table').forEach(t => t.classList.add('hidden'));
+        document.getElementById(id).classList.remove('hidden');
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        if(id === 't1') document.getElementById('pull-area').style.display = 'block';
+        else document.getElementById('pull-area').style.display = 'none';
+    };
+
+    window.exportData = function() {
+        const wb = XLSX.utils.book_new();
+        let d1 = store.allocated.map(r => ({
+            "Rota AT": r.rota, "AT / TO": r.at, "Litragem": r.litragem, "Nome Motorista": r.nome, "Rodou Ontem": r.rodou,
+            "ID Motorista": r.id, "Letra da Rota": r.letra, "Pontuação": 36, 
+            "Total Cluster F": 1, "Total Cluster I": 1, 
+            "Total que combinaram": `(1) ${r.cluster}`, "Combinações": "1 Clusters",
+            "Cidade Motorista": "Uberaba", "Veículo do Motorista": r.veic, "Veículo da Rota": "FIORINO"
+        }));
+        let ws1 = XLSX.utils.json_to_sheet(d1);
+        styleWs(ws1, "C00000");
+        XLSX.utils.book_append_sheet(wb, ws1, "Resultado");
+
+        let d2 = store.routes.map(r => ({"Rota AT": r.rota, "AT": r.at, "Litragem": r.litragem, "Letra": r.letra, "Clusters": r.cluster}));
+        let ws2 = XLSX.utils.json_to_sheet(d2);
+        styleWs(ws2, "EE4D2D");
+        XLSX.utils.book_append_sheet(wb, ws2, "Rotas Não Atribuídas");
+
+        let d3 = store.drivers.map(m => ({"Nome": m.nome, "ID": m.id, "Veículo": m.veic, "Clusters": m.cluster}));
+        let ws3 = XLSX.utils.json_to_sheet(d3);
+        styleWs(ws3, "EE4D2D");
+        XLSX.utils.book_append_sheet(wb, ws3, "Motoristas Sem Rota");
+
+        XLSX.writeFile(wb, store.filename);
+    };
+
+    function styleWs(ws, c) {
+        const range = XLSX.utils.decode_range(ws['!ref']);
+        for(let C=range.s.c; C<=range.e.c; ++C) {
+            const cell = ws[XLSX.utils.encode_cell({r:0, c:C})];
+            if(cell) cell.s = { font:{bold:true, color:{rgb:"FFFFFF"}}, fill:{fgColor:{rgb:c}}, alignment:{horizontal:"center"} };
+        }
+        ws['!cols'] = [{wch:15},{wch:20},{wch:10},{wch:35},{wch:10},{wch:15},{wch:10},{wch:15}];
+    }
+</script>
+
+</body>
+</html>
