@@ -8,7 +8,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     
-    <!-- FIREBASE SDKs (Compat version para rodar direto no HTML) -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
@@ -135,6 +134,12 @@
             font-weight: 900; font-size: 15px;
         }
 
+        /* AJUSTES PARA SCROLL MENSAL NO HISTÓRICO */
+        #t4 th:nth-child(1) { position: sticky; left: 0; z-index: 30; background: #0b1120; min-width: 180px; }
+        #t4 th:nth-child(2) { position: sticky; left: 180px; z-index: 30; background: #0b1120; border-right: 2px solid var(--brand); min-width: 80px; }
+        #t4 td:nth-child(1) { position: sticky; left: 0; z-index: 20; background: var(--bg-card); font-weight: 600; color: #fff; }
+        #t4 td:nth-child(2) { position: sticky; left: 180px; z-index: 20; background: var(--bg-card); border-right: 2px solid var(--brand); }
+
         /* FOOTER */
         .footer-bar {
             position: fixed; bottom: 0; left: 0; width: 100%; 
@@ -151,19 +156,32 @@
         }
         .btn-copy:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(37, 99, 235, 0.5); }
 
+        .btn-save {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white; border: none; padding: 12px 30px; border-radius: 8px; font-weight: 700; font-size: 12px; 
+            cursor: pointer; display: flex; align-items: center; gap: 8px; text-transform: uppercase;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3); transition: 0.3s; margin-right: 15px;
+        }
+        .btn-save:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(16, 185, 129, 0.5); }
+
         .btn-add-driver {
-            background: #10b981; color: white; border: none; padding: 12px 25px; border-radius: 8px; font-weight: 700; font-size: 12px; 
+            background: #3b82f6; color: white; border: none; padding: 12px 25px; border-radius: 8px; font-weight: 700; font-size: 12px; 
             cursor: pointer; display: flex; align-items: center; gap: 8px; text-transform: uppercase; margin-right: 15px;
         }
-        .btn-add-driver:hover { background: #059669; transform: translateY(-2px); }
+        .btn-add-driver:hover { background: #2563eb; transform: translateY(-2px); }
 
-        .btn-pull-area { padding: 15px; background: #0b1120; border-top: 1px solid var(--border); text-align: center; }
+        .btn-pull-area { padding: 15px; background: #0b1120; border-top: 1px solid var(--border); text-align: center; display: flex; justify-content: center;}
         .btn-pull {
             background: rgba(245, 158, 11, 0.1); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3);
             padding: 10px 25px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 11px; 
-            width: 100%; transition: 0.2s; text-transform: uppercase; letter-spacing: 1px;
+            width: 100%; max-width: 400px; transition: 0.2s; text-transform: uppercase; letter-spacing: 1px;
         }
         .btn-pull:hover { background: rgba(245, 158, 11, 0.2); border-color: #fbbf24; }
+        
+        .btn-export {
+            background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+        .btn-export:hover { background: rgba(16, 185, 129, 0.2); border-color: #10b981; }
 
         .hidden { display: none !important; }
         .edit-input { background: transparent; border: 1px solid transparent; color: #fff; width: 100%; padding: 6px; font-size: 12px; border-radius: 4px; }
@@ -262,7 +280,7 @@
             <button class="tab-btn active" onclick="nav('t1', this)">✅ ALOCADOS</button>
             <button class="tab-btn" onclick="nav('t2', this)">⚠️ SOBRAS</button>
             <button class="tab-btn" onclick="nav('t3', this)">🚚 LIVRES</button>
-            <button class="tab-btn" onclick="nav('t4', this)">📊 HISTÓRICO</button>
+            <button class="tab-btn" onclick="nav('t4', this)">📊 HISTÓRICO MENSAL</button>
         </div>
 
         <div class="table-wrap">
@@ -306,6 +324,12 @@
                     <i class="fa-solid fa-arrow-down"></i> PUXAR ROTAS SOBRANDO
                 </button>
             </div>
+            
+            <div id="export-csv-area" class="btn-pull-area" style="display: none;">
+                <button class="btn-pull btn-export" onclick="exportHistoryCSV()">
+                    <i class="fa-solid fa-file-csv"></i> EXPORTAR MÊS PARA CSV
+                </button>
+            </div>
         </div>
     </div>
 </div>
@@ -313,6 +337,9 @@
 <div class="footer-bar hidden" id="footer-actions">
     <button class="btn-add-driver" onclick="openAddDriver()">
         <i class="fa-solid fa-user-plus"></i> + Motorista
+    </button>
+    <button class="btn-save" onclick="commitDayToFirebase(this)">
+        <i class="fa-solid fa-cloud-arrow-up"></i> Salvar Diária
     </button>
     <button class="btn-copy" onclick="copyCombined(this)">
         <i class="fa-regular fa-copy"></i> Copiar ID e AT
@@ -348,12 +375,59 @@
 
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
+    
+    // =====================================================================
+    // ROTINA DE LIMPEZA AUTOMÁTICA (DIA 10 DO NOVO MÊS)
+    // =====================================================================
+    async function cleanupOldHistory() {
+        let today = new Date();
+        if (today.getDate() < 10) return; // Só apaga do dia 10 em diante
+
+        // Formato numérico ex: 202605
+        let currentYearMonth = parseInt(`${today.getFullYear()}${String(today.getMonth() + 1).padStart(2, '0')}`);
+
+        try {
+            let snap = await database.ref('shopee_history').once('value');
+            if (!snap.exists()) return;
+            
+            let updates = {};
+            let hasDeletions = false;
+
+            snap.forEach(childSnap => {
+                let dateStr = childSnap.key; // ex: "20260425"
+                if (dateStr && dateStr.length === 8) {
+                    let rowYearMonth = parseInt(dateStr.substring(0, 6)); 
+                    if (rowYearMonth < currentYearMonth) { 
+                        // Se for de um mês/ano anterior, prepara para deletar
+                        updates[dateStr] = null; 
+                        hasDeletions = true;
+                    }
+                }
+            });
+
+            if (hasDeletions) {
+                await database.ref('shopee_history').update(updates);
+                console.log("Limpeza de histórico antigo concluída com sucesso.");
+            }
+        } catch (e) {
+            console.error("Erro na limpeza automática:", e);
+        }
+    }
+    
+    // Executa silenciosamente na abertura do sistema
+    cleanupOldHistory();
+
     // =====================================================================
 
     let store = { allocated: [], routes: [], drivers: [], filename: "" };
     let db = { dataCode: "" };
     let driverMap = {}; 
     let allDriversList = []; 
+    let rejectedDriversToday = new Set(); 
+    
+    // Variáveis globais para exportação do CSV
+    window.currentMonthDates = [];
+    window.currentMonthData = [];
 
     const cleanBasic = t => String(t||"").toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim();
     
@@ -427,12 +501,14 @@
         if(!e.target.files[0]) return;
         store = { allocated: [], routes: [], drivers: [], filename: "" };
         driverMap = {}; allDriversList = [];
+        rejectedDriversToday.clear(); 
+        
         document.getElementById('b-alocados').innerHTML = "";
         document.getElementById('loading-overlay').style.display = 'block'; 
         
         const r = new FileReader();
         r.onload = function(evt) {
-            setTimeout(() => { 
+            setTimeout(async () => { 
                 try {
                     const wb = XLSX.read(evt.target.result, {type: 'array', cellDates: true});
                     const sR = wb.SheetNames.find(n => n.match(/romaneio/i));
@@ -444,6 +520,16 @@
                         db.dataCode = getDateCode(dateObj);
                         store.filename = `Atribuição ${formatDate(dateObj)}.xlsx`;
                         document.getElementById('file-info').innerHTML = `Data Base: <b>${formatDate(dateObj)}</b>`;
+
+                        try {
+                            let snap = await database.ref('shopee_history/' + db.dataCode).once('value');
+                            if(snap.exists()) {
+                                let data = snap.val();
+                                Object.keys(data).forEach(k => {
+                                    if(data[k].rejected) rejectedDriversToday.add(k);
+                                });
+                            }
+                        } catch(e) { console.error("Erro ao buscar histórico do dia", e); }
 
                         let rowR = findHeaderRow(wsR);
                         let mapR = mapColumns(wsR, rowR);
@@ -556,7 +642,7 @@
                             rota: r.id, at: r.at, nome: m.nome, id: m.id, 
                             veic: m.veic, letra: r.letra, rodou: m.rodou, 
                             cluster: r.cluster, litragem: r.litragem, matchType: type,
-                            rejected: false, rejectReason: "" // Inicializa como falso e sem motivo
+                            rejected: false 
                         });
                         m.disp = false; r.st = 'ok'; break;
                     }
@@ -604,12 +690,13 @@
     }
 
     // =====================================================================
-    // LÓGICA DE SALVAMENTO NO FIREBASE
+    // LÓGICA MANUAL DE OFICIALIZAÇÃO NO FIREBASE TIE AO NOVO BOTÃO
     // =====================================================================
-    window.saveDayToFirebase = function() {
-        if (!db.dataCode || store.allocated.length === 0) return; // Só salva se houver dados importados
+    window.commitDayToFirebase = function(btn) {
+        if (!db.dataCode) return alert("Nenhuma planilha base importada para salvar!");
 
         let allocatedToday = {};
+        
         store.allocated.forEach(a => {
             let nome = a.nome.trim().toUpperCase();
             if (nome && nome.length > 2 && nome !== "MANUAL") {
@@ -617,104 +704,124 @@
                 
                 if (a.rejected) {
                     allocatedToday[nome].rejected = true;
-                    allocatedToday[nome].rejectReason = a.rejectReason || "Sem justificativa";
+                    rejectedDriversToday.add(nome); 
                 } else {
                     allocatedToday[nome].count += 1;
                 }
             }
         });
         
-        // Salva silenciosamente no Firebase
-        database.ref('shopee_history/' + db.dataCode).set(allocatedToday);
+        rejectedDriversToday.forEach(nome => {
+            if (!allocatedToday[nome]) {
+                allocatedToday[nome] = { id: driverMap[nome] || "", count: 0, rejected: true };
+            } else {
+                allocatedToday[nome].rejected = true;
+            }
+        });
+        
+        // Atualiza UI do botão para feedback de progresso
+        let originalHtml = btn.innerHTML;
+        btn.innerHTML = "<i class='fa-solid fa-spinner fa-spin'></i> Salvando...";
+        
+        database.ref('shopee_history/' + db.dataCode).set(allocatedToday).then(() => {
+            btn.innerHTML = "<i class='fa-solid fa-check'></i> Salvo!";
+            
+            // Se a aba de histórico já estiver aberta, atualiza ela para mostrar os novos dados
+            let histTabActive = document.getElementById('t4').classList.contains('hidden') === false;
+            if (histTabActive) {
+                loadAndRenderHistory(db.dataCode);
+            }
+            
+            setTimeout(() => { btn.innerHTML = originalHtml; }, 2000);
+        }).catch(err => {
+            alert("Erro ao salvar: " + err.message);
+            btn.innerHTML = originalHtml;
+        });
     }
 
     // =====================================================================
-    // LÓGICA DE LEITURA DO HISTÓRICO ONLINE (EVITA TRAVAMENTO)
+    // LÓGICA DE LEITURA DO HISTÓRICO MENSAL ONLINE (SCROLL)
     // =====================================================================
     window.loadAndRenderHistory = async function(baseDateCode) {
         if (!baseDateCode) return;
 
         let refYear = parseInt(baseDateCode.substring(0,4));
         let refMonth = parseInt(baseDateCode.substring(4,6)) - 1;
-        let refDay = parseInt(baseDateCode.substring(6,8));
-        let refDate = new Date(refYear, refMonth, refDay);
-        
-        let dayOfWeek = refDate.getDay(); 
-        let diffToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek; 
-        let mondayDate = new Date(refDate);
-        mondayDate.setDate(refDate.getDate() + diffToMonday);
+        let daysInMonth = new Date(refYear, refMonth + 1, 0).getDate(); 
 
-        let weekDates = [];
-        let weekHeaders = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
-        let theadHtml = `<tr><th>Nome Motorista</th><th>ID</th>`;
+        let monthDates = [];
+        let weekNames = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
         
-        for(let i=0; i<7; i++) {
-            let d = new Date(mondayDate);
-            d.setDate(mondayDate.getDate() + i);
-            
+        let theadHtml = `<tr>
+            <th>Nome Motorista</th>
+            <th>ID</th>`;
+        
+        for(let i=1; i<=daysInMonth; i++) {
+            let d = new Date(refYear, refMonth, i);
             let dCode = `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
             let dDisplay = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`;
-            weekDates.push(dCode);
+            monthDates.push(dCode);
             
             let isToday = (dCode === baseDateCode) ? 'color: #fff; border-bottom: 2px solid var(--brand);' : '';
-            theadHtml += `<th style="text-align:center; ${isToday}">${weekHeaders[i]}<br><span style="font-size:9px; color:#94a3b8;">${dDisplay}</span></th>`;
+            let wName = weekNames[d.getDay()];
+            
+            theadHtml += `<th style="text-align:center; min-width:40px; ${isToday}">${wName}<br><span style="font-size:9px; color:#94a3b8;">${dDisplay}</span></th>`;
         }
-        theadHtml += `<th style="color:var(--brand); text-align:center;">Total</th></tr>`;
+        theadHtml += `<th style="color:var(--brand); text-align:center; min-width: 60px;">Total</th></tr>`;
+        
         document.getElementById('h-historico').innerHTML = theadHtml;
 
-        document.getElementById('b-historico').innerHTML = `<tr><td colspan="10" style="text-align:center; color: var(--brand); font-weight:bold; padding: 20px;"><i class="fa-solid fa-spinner fa-spin"></i> Sincronizando com Banco de Dados...</td></tr>`;
+        document.getElementById('b-historico').innerHTML = `<tr><td colspan="${daysInMonth + 3}" style="text-align:center; color: var(--brand); font-weight:bold; padding: 20px;"><i class="fa-solid fa-spinner fa-spin"></i> Sincronizando Mês com o Banco de Dados...</td></tr>`;
 
-        // Busca apenas as 7 datas exatas
         let historyFromFirebase = {};
         try {
-            let fetchPromises = weekDates.map(dCode => database.ref('shopee_history/' + dCode).once('value'));
+            let fetchPromises = monthDates.map(dCode => database.ref('shopee_history/' + dCode).once('value'));
             let snapshots = await Promise.all(fetchPromises);
             
             snapshots.forEach((snap, index) => {
                 if (snap.exists()) {
-                    historyFromFirebase[weekDates[index]] = snap.val();
+                    historyFromFirebase[monthDates[index]] = snap.val();
                 }
             });
         } catch (error) {
             console.error("Erro Firebase:", error);
-            document.getElementById('b-historico').innerHTML = `<tr><td colspan="10" style="text-align:center; color: #ef4444;">Erro ao carregar histórico. Verifique a conexão.</td></tr>`;
+            document.getElementById('b-historico').innerHTML = `<tr><td colspan="${daysInMonth + 3}" style="text-align:center; color: #ef4444;">Erro ao carregar histórico. Verifique a conexão.</td></tr>`;
             return;
         }
 
-        // Agrupa Dados
-        let weekData = {};
-        weekDates.forEach(dCode => {
+        let monthData = {};
+        monthDates.forEach(dCode => {
             let dayData = historyFromFirebase[dCode] || {};
             Object.keys(dayData).forEach(nome => {
-                if (!weekData[nome]) weekData[nome] = { id: dayData[nome].id, days: {}, total: 0 };
+                if (!monthData[nome]) monthData[nome] = { id: dayData[nome].id, days: {}, total: 0 };
                 
                 let count = dayData[nome].count || 0;
                 let isRejected = dayData[nome].rejected || false;
-                let reason = dayData[nome].rejectReason || "Sem justificativa";
                 
-                weekData[nome].days[dCode] = { count: count, rejected: isRejected, reason: reason };
-                weekData[nome].total += count;
+                monthData[nome].days[dCode] = { count: count, rejected: isRejected };
+                monthData[nome].total += count;
             });
         });
 
-        // Ordena Tabela
-        let sortedDrivers = Object.keys(weekData)
-            .map(nome => ({ nome, id: weekData[nome].id, days: weekData[nome].days, total: weekData[nome].total }))
+        let sortedDrivers = Object.keys(monthData)
+            .map(nome => ({ nome, id: monthData[nome].id, days: monthData[nome].days, total: monthData[nome].total }))
             .sort((a, b) => b.total - a.total);
+            
+        window.currentMonthDates = monthDates;
+        window.currentMonthData = sortedDrivers;
 
         let tbodyHtml = "";
         sortedDrivers.forEach(d => {
             tbodyHtml += `<tr>
-                <td style="font-weight:600; color:#fff;">${d.nome}</td>
+                <td>${d.nome}</td>
                 <td>${d.id}</td>`;
             
-            weekDates.forEach(dCode => {
+            monthDates.forEach(dCode => {
                 let dayObj = d.days[dCode];
                 if (!dayObj) {
                     tbodyHtml += `<td style="text-align:center; color: #475569;">-</td>`;
                 } else if (dayObj.rejected) {
-                    // Célula Vermelha Neon indicando perda da rota com Tooltip do motivo
-                    tbodyHtml += `<td style="text-align:center;" class="text-neon-red" title="Motivo: ${dayObj.reason}">
+                    tbodyHtml += `<td style="text-align:center;" class="text-neon-red" title="Perdeu a Rota">
                         0 <i class="fa-solid fa-circle-info" style="font-size: 10px; cursor: help; opacity: 0.8;"></i>
                     </td>`;
                 } else {
@@ -726,7 +833,43 @@
             </tr>`;
         });
         
-        document.getElementById('b-historico').innerHTML = tbodyHtml || `<tr><td colspan="10" style="text-align:center;">Nenhum dado encontrado no Firebase para esta semana.</td></tr>`;
+        document.getElementById('b-historico').innerHTML = tbodyHtml || `<tr><td colspan="${daysInMonth + 3}" style="text-align:center;">Nenhum dado encontrado no Firebase para este mês.</td></tr>`;
+    }
+
+    // =====================================================================
+    // EXPORTAÇÃO CSV
+    // =====================================================================
+    window.exportHistoryCSV = function() {
+        if (!window.currentMonthData || window.currentMonthData.length === 0) {
+            return alert("Não há dados mensais carregados para exportar.");
+        }
+        
+        let csv = "Nome Motorista;ID;";
+        window.currentMonthDates.forEach(dCode => {
+            let formatDay = `${dCode.substring(6,8)}/${dCode.substring(4,6)}/${dCode.substring(0,4)}`;
+            csv += formatDay + ";";
+        });
+        csv += "Total\n";
+
+        window.currentMonthData.forEach(d => {
+            csv += `${d.nome};${d.id};`;
+            window.currentMonthDates.forEach(dCode => {
+                let dayObj = d.days[dCode];
+                if (!dayObj) csv += "-;";
+                else if (dayObj.rejected) csv += "0 (Perda de Rota);";
+                else csv += `${dayObj.count};`;
+            });
+            csv += `${d.total}\n`;
+        });
+
+        let blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
+        let url = URL.createObjectURL(blob);
+        let a = document.createElement("a");
+        a.href = url;
+        a.download = `Historico_Mensal_Shopee_${window.currentMonthDates[0].substring(0,6)}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
     }
 
     // =====================================================================
@@ -737,21 +880,19 @@
         document.getElementById('view-dashboard').style.display = 'block';
         document.getElementById('btn-top-back').style.display = 'flex';
         
-        // Esconde tudo que não é o histórico
         document.querySelector('.stats-bar').style.display = 'none';
         document.getElementById('pull-area').style.display = 'none';
+        document.getElementById('export-csv-area').style.display = 'flex';
         document.getElementById('footer-actions').classList.add('hidden');
         document.querySelectorAll('table').forEach(t => t.classList.add('hidden'));
         document.getElementById('t4').classList.remove('hidden');
         
-        // Esconde as abas de trabalho e deixa só o botão do histórico ativo
         document.querySelectorAll('.tab-btn').forEach(b => b.style.display = 'none');
         let histBtn = document.querySelector('.tab-nav button:nth-child(4)');
         histBtn.style.display = 'block';
         histBtn.classList.add('active');
-        document.getElementById('file-info').innerHTML = `Visualizando: <b>Histórico Geral</b>`;
+        document.getElementById('file-info').innerHTML = `Visualizando: <b>Histórico Geral Mensal</b>`;
 
-        // Pega a data de HOJE para basear a semana
         let today = new Date();
         let todayCode = `${today.getFullYear()}${String(today.getMonth()+1).padStart(2,'0')}${String(today.getDate()).padStart(2,'0')}`;
         
@@ -760,24 +901,18 @@
 
     // --- INTERAÇÕES DE REJEIÇÃO ---
     window.toggleReject = function(idx, checked) {
-        if (checked) {
-            let motivo = prompt("Descreva o motivo da recusa ou perda da rota (ex: Quebrou, Recusou destino, Chegou atrasado):");
-            
-            // Se o usuário clicar em Cancelar no prompt, desfazemos a marcação visualmente
-            if (motivo === null) {
-                renderScreen(); 
-                return;
+        let nome = store.allocated[idx].nome.trim().toUpperCase();
+        
+        if (nome && nome.length > 2 && nome !== "MANUAL") {
+            if (checked) {
+                rejectedDriversToday.add(nome);
+            } else {
+                rejectedDriversToday.delete(nome);
             }
-            
-            store.allocated[idx].rejected = true;
-            store.allocated[idx].rejectReason = motivo.trim() || "Sem justificativa";
-        } else {
-            store.allocated[idx].rejected = false;
-            store.allocated[idx].rejectReason = "";
         }
         
-        saveDayToFirebase();
-        loadAndRenderHistory(db.dataCode);
+        store.allocated[idx].rejected = checked;
+        // Removido o salvamento automático daqui também
     };
 
     // --- UI ---
@@ -792,7 +927,7 @@
         if(store.routes.length === 0) return alert("Não há rotas sobrando.");
         let pulled = store.routes.map(r => ({
             rota: r.rota, at: r.at, nome: "", id: "", 
-            veic: "", letra: r.letra, rodou: "", cluster: r.cluster, litragem: r.litragem, matchType: "Manual", rejected: false, rejectReason: ""
+            veic: "", letra: r.letra, rodou: "", cluster: r.cluster, litragem: r.litragem, matchType: "Manual", rejected: false
         }));
         store.allocated = [...store.allocated, ...pulled];
         store.routes = [];
@@ -856,8 +991,7 @@
         store.drivers.forEach(m => { h3 += `<tr><td>${m.nome}</td><td>${m.id}</td><td>${m.veic}</td><td>${m.cluster}</td></tr>`; });
         document.getElementById('b-mot').innerHTML = h3;
 
-        saveDayToFirebase();
-        loadAndRenderHistory(db.dataCode);
+        // Limpeza: As funções de salvar automaticamente e baixar o historico a cada letra digitada foram removidas daqui para otimização do Firebase.
     }
 
     function checkFree(name) { return store.drivers.some(d => d.nome.toUpperCase() === name.toUpperCase()); }
@@ -870,8 +1004,7 @@
         
         if(cleanName === "") {
             store.allocated[idx].id = "";
-            store.allocated[idx].rejected = false; // Reseta a rejeição se apagar o nome
-            store.allocated[idx].rejectReason = "";
+            store.allocated[idx].rejected = false; 
         } else {
             if(driverMap[cleanName]) {
                 store.allocated[idx].id = driverMap[cleanName];
@@ -880,6 +1013,11 @@
                 store.allocated[idx].id = ""; 
             }
         }
+        
+        if(oldName && oldName.toUpperCase() !== cleanName) {
+            store.allocated[idx].rejected = false;
+        }
+        
         renderScreen();
     }
 
@@ -921,8 +1059,7 @@
 
                 inp.value = sName;
                 store.allocated[idx].nome = sName;
-                store.allocated[idx].rejected = false; // Reseta rejeição ao mudar nome
-                store.allocated[idx].rejectReason = "";
+                store.allocated[idx].rejected = false; 
                 
                 let k = sName.trim().toUpperCase();
                 if(driverMap[k]) store.allocated[idx].id = driverMap[k];
@@ -986,8 +1123,23 @@
         document.getElementById(id).classList.remove('hidden');
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-        if(id === 't1') document.getElementById('pull-area').style.display = 'block';
-        else document.getElementById('pull-area').style.display = 'none';
+        
+        if(id === 't1') {
+            document.getElementById('pull-area').style.display = 'flex';
+            document.getElementById('export-csv-area').style.display = 'none';
+        } else if (id === 't4') {
+            document.getElementById('pull-area').style.display = 'none';
+            document.getElementById('export-csv-area').style.display = 'flex';
+            
+            // CARREGA O HISTÓRICO APENAS QUANDO A ABA É ABERTA (Otimização)
+            let today = new Date();
+            let todayCode = `${today.getFullYear()}${String(today.getMonth()+1).padStart(2,'0')}${String(today.getDate()).padStart(2,'0')}`;
+            loadAndRenderHistory(db.dataCode || todayCode);
+            
+        } else {
+            document.getElementById('pull-area').style.display = 'none';
+            document.getElementById('export-csv-area').style.display = 'none';
+        }
     };
 
     window.exportData = function() {
