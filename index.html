@@ -111,11 +111,34 @@
         .tag-fixo { background: rgba(16, 185, 129, 0.2); color: #34d399; padding: 4px 8px; border-radius: 4px; font-weight: 700; font-size: 10px; border: 1px solid rgba(16, 185, 129, 0.3); }
         .tag-curinga { background: rgba(168, 85, 247, 0.2); color: #c084fc; padding: 4px 8px; border-radius: 4px; font-weight: 700; font-size: 10px; border: 1px solid rgba(168, 85, 247, 0.3); }
         .checkbox-reject { accent-color: #ff003c; width: 16px; height: 16px; cursor: pointer; }
-        .edit-input { background: transparent; border: 1px solid transparent; color: #fff; width: 100%; padding: 6px; font-size: 12px; border-radius: 4px; }
+        .edit-input { background: transparent; border: 1px solid transparent; color: #fff; width: 100%; padding: 6px; font-size: 12px; border-radius: 4px; transition: 0.2s; }
         .edit-input:focus { border-color: var(--brand); background: rgba(238, 77, 45, 0.1); outline: none; }
         .input-manual { border: 1px solid rgba(245, 158, 11, 0.3) !important; background: rgba(245, 158, 11, 0.02); }
         .btn-del { background: rgba(239, 68, 68, 0.1); border: none; color: #ef4444; cursor: pointer; padding: 6px; border-radius: 4px; font-size: 12px; transition: 0.2s; }
         .btn-del:hover { background: #ef4444; color: white; }
+
+        /* === SISTEMA DE NEON INTELIGENTE === */
+        /* Domingo (Roxo) */
+        .neon-sunday {
+            color: #d8b4fe !important;
+            text-shadow: 0 0 10px rgba(192, 132, 252, 0.8) !important;
+            font-weight: 900 !important;
+        }
+        /* Match de Rota (Amarelo) */
+        .neon-match {
+            color: #fde047 !important;
+            text-shadow: 0 0 10px rgba(234, 179, 8, 0.8) !important;
+            font-weight: 900 !important;
+        }
+        /* Domingo + Match de Rota (Metade Roxo, Metade Amarelo) */
+        .neon-both {
+            background: linear-gradient(90deg, #d8b4fe 0%, #fde047 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent !important;
+            font-weight: 900 !important;
+            filter: drop-shadow(0px 0px 4px rgba(255,255,255,0.4));
+        }
 
         /* HISTÓRICO PREMIUM ESTILO (COMPACTO) */
         #t4 { border-collapse: separate; border-spacing: 0; }
@@ -155,7 +178,7 @@
         .btn-add-driver { background: #3b82f6; color: white; border: none; padding: 12px 25px; border-radius: 8px; font-weight: 700; font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 8px; text-transform: uppercase; margin-right: 15px; }
         .btn-add-driver:hover { background: #2563eb; transform: translateY(-2px); }
         
-        .btn-pull-area { padding: 15px; background: #0b1120; border-top: 1px solid var(--border); text-align: center; display: flex; justify-content: center; gap: 15px;}
+        .btn-pull-area { padding: 15px; background: #0b1120; border-top: 1px solid var(--border); text-align: center; display: flex; justify-content: center; gap: 15px; flex-shrink: 0; }
         .btn-pull { background: rgba(245, 158, 11, 0.1); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); padding: 10px 25px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 11px; width: 100%; max-width: 400px; transition: 0.2s; text-transform: uppercase; letter-spacing: 1px; }
         .btn-pull:hover { background: rgba(245, 158, 11, 0.2); border-color: #fbbf24; }
 
@@ -203,7 +226,6 @@
     <div class="nav-module" onclick="switchModule('analise', this)"><i class="fa-solid fa-route"></i> HISTÓRICO DE ROTAS</div>
 </nav>
 
-<!-- 1. MÓDULO ALOCAÇÃO -->
 <div id="module-alocacao" class="module-section active">
     <div class="container">
         <div id="view-upload">
@@ -280,7 +302,6 @@
     </div>
 </div>
 
-<!-- 2. MÓDULO HISTÓRICO DE ALOCAÇÃO -->
 <div id="module-historico" class="module-section">
     <div class="container">
         
@@ -329,7 +350,6 @@
     </div>
 </div>
 
-<!-- 3. MÓDULO DASHBOARD PÁTIO -->
 <div id="module-patio" class="module-section">
     <div class="container" style="max-width: 1400px;">
         <h1 class="hero-title" style="margin-top: 20px;">Dashboard Pátio</h1>
@@ -360,7 +380,6 @@
     </div>
 </div>
 
-<!-- 4. MÓDULO HISTÓRICO DE ROTAS E FROTA -->
 <div id="module-analise" class="module-section">
     <div class="container">
         <h1 class="hero-title" style="margin-top: 20px;">Histórico de Rotas</h1>
@@ -428,7 +447,7 @@
     }
 
     // =====================================================================
-    // 0. FIREBASE SETUP E NAVEGAÇÃO
+    // 0. FIREBASE SETUP E NAVEGAÇÃO E VARIÁVEIS GLOBAIS
     // =====================================================================
     const firebaseConfig = {
         apiKey: "AIzaSyBxzyFdum86noYdpQnldyjX4wiPB7IJEMY",
@@ -448,6 +467,11 @@
 
     window.currentMonthDriverCounts = {}; 
     window.historyListenerRef = null; 
+    window.driverOriginalData = {}; 
+    window.activeSwapCluster = ""; 
+    
+    window.currentSundayDrivers = new Set();
+    window.lastSundayTargetCode = "";
 
     function switchModule(mod, el) {
         document.querySelectorAll('.module-section').forEach(m => m.classList.remove('active'));
@@ -519,6 +543,7 @@
         if(!e.target.files[0]) return;
         store = { allocated: [], routes: [], drivers: [], filename: "" };
         driverMap = {}; allDriversList = []; window.currentMonthDriverCounts = {};
+        window.driverOriginalData = {}; 
         
         document.getElementById('b-alocados').innerHTML = "";
         document.getElementById('loading-overlay').style.display = 'block'; 
@@ -534,11 +559,29 @@
 
                     if(sR && sM) {
                         const wsR = wb.Sheets[sR]; const wsM = wb.Sheets[sM];
-                        let dateObj = getJsDate(wsM['A2']);
-                        db.dataCode = getDateCode(dateObj);
-                        store.filename = `Atribuição ${formatDate(dateObj)}.xlsx`;
-                        document.getElementById('file-info').innerHTML = `Data Base: <b>${formatDate(dateObj)}</b>`;
+                        let fileDateObj = getJsDate(wsM['A2']);
+                        db.dataCode = getDateCode(fileDateObj);
+                        store.filename = `Atribuição ${formatDate(fileDateObj)}.xlsx`;
+                        document.getElementById('file-info').innerHTML = `Data Base: <b>${formatDate(fileDateObj)}</b>`;
 
+                        // 1. CÁLCULO E BUSCA DO ÚLTIMO DOMINGO
+                        let lastSunday = new Date(fileDateObj.getFullYear(), fileDateObj.getMonth(), fileDateObj.getDate());
+                        lastSunday.setDate(lastSunday.getDate() - lastSunday.getDay());
+                        window.lastSundayTargetCode = getDateCode(lastSunday);
+                        
+                        window.currentSundayDrivers = new Set();
+                        try {
+                            let snapSunday = await database.ref(`shopee_history/${window.lastSundayTargetCode}`).once('value');
+                            if(snapSunday.exists()) {
+                                let sunData = snapSunday.val();
+                                Object.keys(sunData).forEach(nome => {
+                                    let d = sunData[nome];
+                                    if(d.AM || d.PM || d.count > 0) window.currentSundayDrivers.add(nome.toUpperCase());
+                                });
+                            }
+                        } catch(e) {}
+
+                        // 2. CONFIGURAÇÃO DA ESCUTA EM TEMPO REAL DO MÊS INTEIRO
                         let yyyy = db.dataCode.substring(0,4);
                         let mm = db.dataCode.substring(4,6);
                         let daysInMonth = new Date(parseInt(yyyy), parseInt(mm), 0).getDate();
@@ -550,16 +593,17 @@
                         
                         try {
                             let snapMonth = await window.historyListenerRef.once('value');
-                            if(snapMonth.exists()) processRealTimeCounts(snapMonth.val());
+                            if(snapMonth.exists()) processRealTimeCounts(snapMonth.val(), db.dataCode);
                         } catch(e) {}
 
                         window.historyListenerRef.on('value', snap => {
                             if(snap.exists()) {
-                                processRealTimeCounts(snap.val());
+                                processRealTimeCounts(snap.val(), db.dataCode);
                                 if(store.allocated.length > 0 || store.drivers.length > 0) renderScreen();
                             }
                         });
 
+                        // 3. EXECUÇÃO DO MATCH DA PLANILHA
                         let rowR = findHeaderRow(wsR); let mapR = mapColumns(wsR, rowR);
                         let rowM = findHeaderRow(wsM); let mapM = mapColumns(wsM, rowM);
                         document.getElementById('debug-log').innerHTML = `Litragem: Col ${mapR.litragem} | Cluster Base: Col ${mapR.clusterR}`;
@@ -578,18 +622,27 @@
         e.target.value = '';
     });
 
-    function processRealTimeCounts(histData) {
+    function processRealTimeCounts(histData, baseDataCode) {
         let driverCounts = {};
+        let targetSundayInMonth = window.lastSundayTargetCode && window.lastSundayTargetCode.startsWith(baseDataCode.substring(0,6));
+        let tempSundaySet = targetSundayInMonth ? new Set() : window.currentSundayDrivers;
+        
         Object.keys(histData).forEach(dCode => {
             let dayData = histData[dCode];
             Object.keys(dayData).forEach(nome => {
                 let d = dayData[nome];
                 if (d.AM || d.PM || d.count > 0) {
-                    driverCounts[nome.toUpperCase()] = (driverCounts[nome.toUpperCase()] || 0) + 1;
+                    let upperName = nome.toUpperCase();
+                    driverCounts[upperName] = (driverCounts[upperName] || 0) + 1;
+                    
+                    if(targetSundayInMonth && dCode === window.lastSundayTargetCode) {
+                        tempSundaySet.add(upperName);
+                    }
                 }
             });
         });
         window.currentMonthDriverCounts = driverCounts;
+        if(targetSundayInMonth) window.currentSundayDrivers = tempSundaySet;
     }
 
     function runEngine(rom, mot, mapR, mapM) {
@@ -619,8 +672,14 @@
             let aceito = false;
             if(v.includes("FIORINO") || v.includes("VAN") || v.includes("VUC") || v.includes("UTILITARIO") || v.includes("ENTREGA")) aceito = true;
 
-            if(aceito && String(m[mapM.clusterM]).length > 1) {
-                frota.push({ nome: m[mapM.nome], id: m[mapM.id], cluster: String(m[mapM.clusterM]||""), veic: v, rodou: String(m[mapM.rodou]||"Não"), isAll: isAll(String(m[mapM.clusterM]||"")), disp: true });
+            let cMotorista = String(m[mapM.clusterM]||"");
+            
+            if(nome.length > 2) {
+                window.driverOriginalData[nome] = { veic: v, cluster: cMotorista };
+            }
+
+            if(aceito && cMotorista.length > 1) {
+                frota.push({ nome: m[mapM.nome], id: id, cluster: cMotorista, veic: v, rodou: String(m[mapM.rodou]||"Não"), isAll: isAll(cMotorista), disp: true });
             }
         });
 
@@ -659,6 +718,11 @@
         updateStats(ignored);
     }
 
+    function checkDeepMatch(mClust, rClust) {
+        let mTok = getTokens(mClust); let rTok = getTokens(rClust);
+        for (let t of mTok) { if (rTok.includes(t)) return t; } return null;
+    }
+
     function renderScreen() {
         document.getElementById('view-upload').style.display = 'none';
         document.getElementById('view-dashboard').style.display = 'block';
@@ -674,7 +738,11 @@
 
         let h1 = "";
         store.allocated.forEach((r,i) => {
-            let cls = r.nome === "" ? "edit-input input-manual" : "edit-input";
+            // CORREÇÃO: Resgatando o roxo neon na aba Alocados (Limitado até quarta-feira)
+            let isSunday = (hoje.getDay() <= 3 && window.currentSundayDrivers && window.currentSundayDrivers.has(r.nome.toUpperCase()));
+            let neonClass = isSunday ? "neon-sunday" : "";
+            let cls = r.nome === "" ? "edit-input input-manual" : `edit-input ${neonClass}`;
+            
             let isDup = (nameCount[r.nome] > 1) || (idCount[r.id] > 1);
             let rowClass = isDup ? "row-dup" : "";
             let mTag = "";
@@ -702,6 +770,10 @@
         let h2 = ""; store.routes.forEach(r => { h2 += `<tr><td>${r.rota}</td><td>${r.at}</td><td>${r.litragem}</td><td>${r.letra}</td><td style="color:#f59e0b;">${r.cluster}</td></tr>`; });
         document.getElementById('b-rotas').innerHTML = h2;
 
+        renderLivresTable();
+    }
+
+    function renderLivresTable() {
         store.drivers.sort((a,b) => {
             let cA = window.currentMonthDriverCounts[a.nome.toUpperCase()] || 0;
             let cB = window.currentMonthDriverCounts[b.nome.toUpperCase()] || 0;
@@ -709,10 +781,22 @@
         });
 
         let h3 = ""; store.drivers.forEach(m => { 
-            let c = window.currentMonthDriverCounts[m.nome.toUpperCase()] || 0;
-            h3 += `<tr><td>${m.nome}</td><td>${m.id}</td><td>${m.veic}</td><td>${m.cluster}</td><td style="text-align:center; font-weight:900; color:#a5f3fc;">${c}</td></tr>`; 
+            let upperName = m.nome.toUpperCase();
+            let c = window.currentMonthDriverCounts[upperName] || 0;
+            
+            let isSunday = (hoje.getDay() <= 3 && window.currentSundayDrivers && window.currentSundayDrivers.has(upperName));
+            let isMatch = (window.activeSwapCluster && checkDeepMatch(m.cluster, window.activeSwapCluster));
+            
+            let neonClass = "";
+            if(isSunday && isMatch) neonClass = "neon-both";
+            else if(isSunday) neonClass = "neon-sunday";
+            else if(isMatch) neonClass = "neon-match";
+
+            h3 += `<tr><td class="${neonClass}">${m.nome}</td><td>${m.id}</td><td>${m.veic}</td><td>${m.cluster}</td><td style="text-align:center; font-weight:900; color:#a5f3fc;">${c}</td></tr>`; 
         });
-        document.getElementById('b-mot').innerHTML = h3;
+        
+        let el = document.getElementById('b-mot');
+        if(el) el.innerHTML = h3;
     }
 
     function checkFree(name) { return store.drivers.some(d => d.nome.toUpperCase() === name.toUpperCase()); }
@@ -733,6 +817,10 @@
 
     window.onInputName = function(idx, inp) {
         let val = inp.value; closeAllLists();
+        
+        window.activeSwapCluster = store.allocated[idx].cluster;
+        renderLivresTable();
+
         let a = document.createElement("DIV"); a.className = "custom-popup"; a.style.top = (inp.offsetTop + inp.offsetHeight) + "px"; a.style.left = inp.offsetLeft + "px"; a.style.width = inp.offsetWidth + "px"; inp.parentNode.appendChild(a);
 
         let matches = [];
@@ -750,11 +838,22 @@
 
         let count = 0;
         for(let i=0; i<matches.length; i++) {
-            let sName = matches[i]; let isFree = checkFree(sName);
+            let sName = matches[i]; let upperName = sName.toUpperCase();
+            let isFree = checkFree(sName);
+            let orig = window.driverOriginalData[upperName] || {cluster: ""};
+
             let b = document.createElement("DIV"); b.className = isFree ? "popup-item status-free" : "popup-item status-busy";
             
-            let daysInMonthCount = window.currentMonthDriverCounts[sName.toUpperCase()] || 0;
-            b.innerHTML = `<span>${sName} <span style="color:#94a3b8; font-size:9px; font-weight:bold; margin-left:5px;">(${daysInMonthCount} dias)</span></span>` + (isFree ? " <span class='badge-free'>LIVRE</span>" : "");
+            let isSunday = (hoje.getDay() <= 3 && window.currentSundayDrivers && window.currentSundayDrivers.has(upperName));
+            let isMatch = (window.activeSwapCluster && checkDeepMatch(orig.cluster, window.activeSwapCluster));
+            
+            let neonClass = "";
+            if(isSunday && isMatch) neonClass = "neon-both";
+            else if(isSunday) neonClass = "neon-sunday";
+            else if(isMatch) neonClass = "neon-match";
+
+            let daysInMonthCount = window.currentMonthDriverCounts[upperName] || 0;
+            b.innerHTML = `<span><span class="${neonClass}">${sName}</span> <span style="color:#94a3b8; font-size:9px; font-weight:bold; margin-left:5px;">(${daysInMonthCount} dias)</span></span>` + (isFree ? " <span class='badge-free'>LIVRE</span>" : "");
             
             b.addEventListener("mousedown", function(e) {
                 e.preventDefault();
@@ -763,7 +862,10 @@
                 inp.value = sName; store.allocated[idx].nome = sName; store.allocated[idx].rejected = false; 
                 let k = sName.trim().toUpperCase();
                 if(driverMap[k]) store.allocated[idx].id = driverMap[k];
-                consumeFreeDriver(k); renderScreen(); closeAllLists();
+                consumeFreeDriver(k); 
+                window.activeSwapCluster = ""; 
+                renderScreen(); 
+                closeAllLists();
             });
             a.appendChild(b);
             count++; 
@@ -773,11 +875,27 @@
 
     function recycleDriver(name) {
         if(!name || name.length < 2) return; let key = name.toUpperCase();
-        if(driverMap[key]) { if(!store.drivers.some(d => d.nome.toUpperCase() === key)) store.drivers.push({ nome: name, id: driverMap[key], veic: "Reciclado", cluster: "Reciclado" }); }
+        if(driverMap[key]) { 
+            if(!store.drivers.some(d => d.nome.toUpperCase() === key)) {
+                let orig = window.driverOriginalData[key] || { veic: "Reciclado", cluster: "Reciclado" };
+                store.drivers.push({ nome: name, id: driverMap[key], veic: orig.veic, cluster: orig.cluster }); 
+            }
+        }
     }
     function consumeFreeDriver(nameKey) { let freeIdx = store.drivers.findIndex(d => d.nome.toUpperCase() === nameKey); if(freeIdx > -1) store.drivers.splice(freeIdx, 1); }
-    function closeAllLists() { let x = document.getElementsByClassName("custom-popup"); for (let i = 0; i < x.length; i++) x[i].parentNode.removeChild(x[i]); }
-    document.addEventListener("mousedown", function(e) { if(!e.target.classList.contains('edit-input') && !e.target.closest('.custom-popup')) closeAllLists(); });
+    
+    function closeAllLists() { 
+        let x = document.getElementsByClassName("custom-popup"); 
+        for (let i = 0; i < x.length; i++) x[i].parentNode.removeChild(x[i]); 
+    }
+    
+    document.addEventListener("mousedown", function(e) { 
+        if(!e.target.classList.contains('edit-input') && !e.target.closest('.custom-popup')) {
+            closeAllLists(); 
+            window.activeSwapCluster = "";
+            renderLivresTable();
+        }
+    });
 
     window.copyCombined = function(btn) {
         let text = store.allocated.map(r => `${r.id || ""}\t${r.at || ""}`).join('\n');
@@ -1293,12 +1411,30 @@
             let cCounts = {};
             d.clustersY.forEach(c => cCounts[c] = (cCounts[c] || 0) + 1);
             
-            let cSort = Object.keys(cCounts)
+            let allClusters = Object.keys(cCounts)
                 .map(k => ({name: k, count: cCounts[k]}))
-                .sort((a,b) => b.count - a.count)
-                .map(item => `<span style="background:rgba(255,255,255,0.05); padding:2px 5px; border-radius:4px; margin-right:4px; display:inline-block; border:1px solid rgba(255,255,255,0.1); margin-bottom:4px; font-size:9px; letter-spacing:0.1px;"><i class="fa-solid fa-location-dot" style="color:#94a3b8; font-size:8px; margin-right:3px;"></i>${item.name} <span style="color:var(--brand); font-weight:900;">(${item.count}x)</span></span>`);
-            
-            let cText = cSort.length > 0 ? cSort.join('') : '<span style="color:#64748b; font-style:italic;">Sem rotas registradas</span>';
+                .sort((a,b) => b.count - a.count);
+
+            let maxVisible = 5; 
+            let cText = "";
+
+            if (allClusters.length === 0) {
+                cText = '<span style="color:#64748b; font-style:italic;">Sem rotas registradas</span>';
+            } else {
+                let tagsHtml = allClusters.map(item => `<span style="background:rgba(255,255,255,0.05); padding:2px 4px; border-radius:4px; margin-right:3px; display:inline-block; border:1px solid rgba(255,255,255,0.1); margin-bottom:3px; font-size:9px; letter-spacing:0.1px; white-space:nowrap;"><i class="fa-solid fa-location-dot" style="color:#94a3b8; font-size:8px; margin-right:3px;"></i>${item.name} <span style="color:var(--brand); font-weight:900;">(${item.count}x)</span></span>`);
+
+                if (tagsHtml.length <= maxVisible) {
+                    cText = tagsHtml.join('');
+                } else {
+                    let visibleTags = tagsHtml.slice(0, maxVisible - 1);
+                    let hiddenData = allClusters.slice(maxVisible - 1);
+                    let tooltipText = hiddenData.map(h => `${h.name} (${h.count}x)`).join('&#10;');
+                    
+                    let moreTag = `<span title="Rotas Ocultas:&#10;${tooltipText}" style="background:rgba(59, 130, 246, 0.1); color:#60a5fa; padding:2px 5px; border-radius:4px; margin-right:3px; display:inline-block; border:1px solid rgba(59, 130, 246, 0.3); margin-bottom:3px; font-size:9px; font-weight:bold; cursor:help;"><i class="fa-solid fa-layer-group"></i> +${hiddenData.length} Rotas</span>`;
+                    
+                    cText = visibleTags.join('') + moreTag;
+                }
+            }
 
             html += `<tr>
                 <td style="font-weight:600; color:#f8fafc; font-size: 11px;">${d.nome}</td>
