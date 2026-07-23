@@ -83,6 +83,7 @@
         /* TABELAS E DASHBOARD */
         #view-dashboard { display: none; animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
         .stats-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 25px; }
+        .stats-card { background: var(--bg-card); padding: 20px; border-radius: 12px; border: 1px solid var(--border); text-align: center; }
         .stat-card { background: var(--bg-card); padding: 20px; border-radius: 12px; border: 1px solid var(--border); text-align: center; }
         .stat-val { font-size: 24px; font-weight: 700; font-family: 'Montserrat', sans-serif; }
         .stat-lbl { font-size: 11px; color: var(--text-muted); text-transform: uppercase; margin-top: 5px; }
@@ -175,6 +176,8 @@
         .btn-copy:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(37, 99, 235, 0.5); }
         .btn-save { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; padding: 12px 30px; border-radius: 8px; font-weight: 700; font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 8px; text-transform: uppercase; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3); transition: 0.3s; margin-right: 15px; }
         .btn-save:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(16, 185, 129, 0.5); }
+        .btn-clear { background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); padding: 12px 25px; border-radius: 8px; font-weight: 700; font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 8px; text-transform: uppercase; transition: 0.3s; }
+        .btn-clear:hover { background: #ef4444; color: white; transform: translateY(-2px); box-shadow: 0 8px 25px rgba(239, 68, 68, 0.4); }
         .btn-add-driver { background: #3b82f6; color: white; border: none; padding: 12px 25px; border-radius: 8px; font-weight: 700; font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 8px; text-transform: uppercase; margin-right: 15px; }
         .btn-add-driver:hover { background: #2563eb; transform: translateY(-2px); }
         
@@ -318,6 +321,9 @@
                 </select>
                 <button class="btn-save" id="btn-import-historico" style="margin:0; box-shadow: none;" onclick="document.getElementById('upl-patio').click()">
                     <i class="fa-solid fa-upload"></i> Alimentar Turno
+                </button>
+                <button class="btn-clear" id="btn-delete-day" style="margin:0;" onclick="deleteEntireDay()">
+                    <i class="fa-solid fa-calendar-xmark"></i> Limpar Dia Inteiro
                 </button>
                 <input type="file" id="upl-patio" accept=".xlsx" style="display:none">
             </div>
@@ -738,7 +744,6 @@
 
         let h1 = "";
         store.allocated.forEach((r,i) => {
-            // CORREÇÃO: Resgatando o roxo neon na aba Alocados (Limitado até quarta-feira)
             let isSunday = (hoje.getDay() <= 3 && window.currentSundayDrivers && window.currentSundayDrivers.has(r.nome.toUpperCase()));
             let neonClass = isSunday ? "neon-sunday" : "";
             let cls = r.nome === "" ? "edit-input input-manual" : `edit-input ${neonClass}`;
@@ -1047,6 +1052,43 @@
         e.target.value = '';
     });
 
+    // NOVA FUNÇÃO: REMOVER DIA ESPECÍFICO DO BANCO DE DADOS
+    window.deleteEntireDay = async function() {
+        let inputDate = document.getElementById('patio-date').value;
+        if(!inputDate) return alert("Selecione a data que deseja remover!");
+
+        let yyyy = inputDate.split('-')[0];
+        let mm = inputDate.split('-')[1];
+        let dd = inputDate.split('-')[2];
+        let dateCode = `${yyyy}${mm}${dd}`;
+
+        let formattedDisplay = `${dd}/${mm}/${yyyy}`;
+        let confirmation = confirm(`⚠️ ATENÇÃO:\nVocê tem certeza que deseja APAGAR COMPLETAMENTE todos os registros (AM e PM) do dia ${formattedDisplay}?\n\nEsta ação não poderá ser desfeita.`);
+        
+        if(!confirmation) return;
+
+        let btn = document.getElementById('btn-delete-day');
+        let originalHtml = btn.innerHTML;
+        btn.innerHTML = "<i class='fa-solid fa-spinner fa-spin'></i> Limpando...";
+
+        try {
+            await database.ref(`shopee_history/${dateCode}`).remove();
+            
+            alert(`Sucesso! Todos os dados do dia ${formattedDisplay} foram limpos do histórico.`);
+            
+            let activeMonth = document.getElementById('month-picker').value;
+            if(activeMonth === `${yyyy}-${mm}`) {
+                loadSpecificMonth(activeMonth);
+            } else {
+                loadAndRenderHistory(dateCode);
+            }
+        } catch(error) {
+            alert("Erro ao tentar limpar o dia: " + error.message);
+        } finally {
+            btn.innerHTML = originalHtml;
+        }
+    };
+
     window.loadAndRenderHistory = async function(baseDateCode) {
         if (!baseDateCode) return;
         let refYear = parseInt(baseDateCode.substring(0,4));
@@ -1078,7 +1120,15 @@
                 historyFromFirebase = snap.val();
             }
         } catch (error) { 
-            return document.getElementById('b-historico').innerHTML = `<tr><td colspan="${daysInMonth + 4}" style="text-align:center; color: #ef4444;">Erro de conexão com o banco de dados.</td></tr>`; 
+            console.error("Erro detalhado do Firebase:", error);
+            return document.getElementById('b-historico').innerHTML = `
+                <tr>
+                    <td colspan="${daysInMonth + 4}" style="text-align:center; padding: 30px;">
+                        <i class="fa-solid fa-triangle-exclamation" style="color: #ef4444; font-size: 24px; margin-bottom: 10px;"></i><br>
+                        <span style="color: #ef4444; font-weight: bold; font-size: 14px;">Erro de conexão com o banco de dados.</span><br>
+                        <span style="color: #f59e0b; font-size: 12px; margin-top: 5px; display: inline-block;">Motivo: ${error.message}</span>
+                    </td>
+                </tr>`;
         }
 
         let monthData = {};
@@ -1123,7 +1173,7 @@
                     tbodyHtml += `<td style="text-align:center;"><span class="hist-cell-null">-</span></td>`;
                 } else if (dayObj.rejected) {
                     tbodyHtml += `<td style="text-align:center;" title="Perdeu a Rota"><div class="hist-cell-val hist-cell-rej">0</div></td>`;
-                } else {
+                    } else {
                     let text = "1";
                     let countDia = 0;
                     let cssClass = "hist-cell-ok"; 
