@@ -855,6 +855,17 @@
             });
         });
 
+        // 1. ORDENAÇÃO DE ROTAS (Cluster Preference: Uberaba > Região)
+        let getClusterScore = (c) => {
+            let text = cleanBasic(c);
+            if (text.includes("UBERABA")) return 1;
+            let regioes = ["SACRAMENTO", "PONTE ALTA", "CAMPO FLORIDO", "CONCEICAO", "DELTA", "VERISSIMO", "IGARAPAVA"];
+            if (regioes.some(reg => text.includes(reg))) return 2;
+            return 3;
+        };
+        rotasValidas.sort((a, b) => getClusterScore(a.cluster) - getClusterScore(b.cluster));
+
+
         let frota = [];
         let frotaIds = new Set(); 
 
@@ -899,32 +910,41 @@
 
         if(useRodizio) shuffle(frota); 
         
-        // ===== LÓGICA DE ORDENAÇÃO E PRIORIDADE DE TURNOS =====
+        // 2. ORDENAÇÃO DE MOTORISTAS (Turno > Rodízio > Dias Rodados > Cluster)
         frota.sort((a, b) => {
-            // ==============================================================
-            // CÁLCULO DE PRIORIDADE DO TURNO
-            // 0 = Turno Idêntico (Máxima Prioridade) -> AM puro no turno AM!
-            // 1 = Aceita Ambos (AM / PM)
-            // 2 = Turno Incompatível (Jogado pro final)
-            // ==============================================================
+            // Prioridade 1: Disponibilidade de Horário
             let getTurnoScore = (t) => {
                 if (t === targetTurno) return 0;
                 if (t === "AM / PM") return 1;
                 return 2;
             };
-            
             let scoreA = getTurnoScore(a.turno);
             let scoreB = getTurnoScore(b.turno);
-            
             if (scoreA !== scoreB) return scoreA - scoreB;
 
-            // Desempate entre motoristas da mesma prioridade: Quem tem menos dias tem prioridade
+            // Prioridade 2: Rodízio (Inverter o turno trabalhado ontem)
+            let rodizioScore = (nome) => {
+                let last = window.lastWorkedShift[nome.toUpperCase()];
+                if (!last) return 0; 
+                if (targetTurno === 'AM' && last === 'PM') return -1; 
+                if (targetTurno === 'PM' && last === 'AM') return -1; 
+                if (last === targetTurno) return 1; 
+                return 0;
+            };
+            let rA = rodizioScore(a.nome);
+            let rB = rodizioScore(b.nome);
+            if (rA !== rB) return rA - rB;
+
+            // Prioridade 3: Menos dias trabalhados
             let diasA = window.currentMonthDriverCounts[a.nome.toUpperCase()] || 0;
             let diasB = window.currentMonthDriverCounts[b.nome.toUpperCase()] || 0;
-            
-            return diasA - diasB;
+            if (diasA !== diasB) return diasA - diasB;
+
+            // Prioridade 4: Cluster Preferencial (Uberaba > Região)
+            let cA = getClusterScore(a.cluster);
+            let cB = getClusterScore(b.cluster);
+            return cA - cB;
         });
-        // =======================================================
 
         const checkDeepMatch = (mClust, rClust) => {
             let mTok = getTokens(mClust); let rTok = getTokens(rClust);
