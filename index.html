@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sinergia utilitários / Rodízio</title>
+    <title>Sinergia Xpress</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    
+   
     <!-- FIREBASE -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
@@ -17,19 +17,19 @@
 
     <style>
         :root {
-            --brand: #EE4D2D; 
-            --bg-body: #020617; 
-            --bg-card: #0f172a; 
-            --text-main: #f8fafc; 
-            --text-muted: #94a3b8; 
-            --border: #1e293b; 
+            --brand: #EE4D2D;
+            --bg-body: #020617;
+            --bg-card: #0f172a;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: #1e293b;
             --success: #10b981;
             --glass: rgba(15, 23, 42, 0.7);
         }
-        
+       
         body {
-            font-family: 'Inter', sans-serif; 
-            background-color: var(--bg-body); 
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-body);
             margin: 0; padding: 0;
             color: var(--text-main); min-height: 100vh;
         }
@@ -77,7 +77,7 @@
             text-align: center;
         }
         .login-title {
-            color: var(--brand); margin: 0 0 5px 0; font-family: 'Montserrat', sans-serif; 
+            color: var(--brand); margin: 0 0 5px 0; font-family: 'Montserrat', sans-serif;
             font-weight: 800; font-size: 22px; text-transform: uppercase;
         }
         .login-subtitle {
@@ -90,15 +90,15 @@
         }
         .login-input:focus { border-color: var(--brand); outline: none; background: rgba(238, 77, 45, 0.05); }
         .btn-login {
-            width: 100%; background: var(--brand); color: white; border: none; padding: 14px; 
-            border-radius: 6px; font-weight: 700; font-size: 13px; cursor: pointer; 
+            width: 100%; background: var(--brand); color: white; border: none; padding: 14px;
+            border-radius: 6px; font-weight: 700; font-size: 13px; cursor: pointer;
             text-transform: uppercase; transition: 0.3s; margin-top: 10px;
         }
         .btn-login:hover { background: #d93d20; transform: translateY(-2px); box-shadow: 0 10px 20px rgba(238, 77, 45, 0.2); }
         #login-error { color: #ef4444; font-size: 12px; margin-bottom: 15px; display: none; font-weight: bold; }
-        
+       
         #app-content { display: none; }
-        
+       
         /* HEADER & DASHBOARD NAV */
         .top-bar {
             background: var(--glass); backdrop-filter: blur(15px); border-bottom: 1px solid rgba(255,255,255,0.05);
@@ -106,7 +106,7 @@
         }
         .logo h1 { font-family: 'Montserrat', sans-serif; font-size: 18px; margin: 0; text-transform: uppercase; letter-spacing: 1px; }
         .text-shopee { color: var(--brand); font-weight: 800; }
-        
+       
         .dashboard-nav { background: #0b1120; border-bottom: 1px solid var(--border); display: flex; padding: 0 40px; flex-wrap: wrap; }
         .nav-module { padding: 20px 20px; cursor: pointer; color: var(--text-muted); font-weight: 700; font-size: 12px; text-transform: uppercase; border-bottom: 3px solid transparent; transition: 0.3s; }
         .nav-module.active { color: #fff; border-bottom-color: var(--brand); background: rgba(238,77,45,0.05); }
@@ -155,7 +155,7 @@
         .tab-nav { display: flex; gap: 5px; margin-bottom: 0; }
         .tab-btn { padding: 12px 25px; background: var(--bg-card); border: 1px solid var(--border); border-bottom: none; color: var(--text-muted); border-radius: 10px 10px 0 0; cursor: pointer; font-weight: 600; font-size: 11px; transition: 0.2s; text-transform: uppercase; }
         .tab-btn.active { background: var(--brand); color: #fff; border-color: var(--brand); }
-        
+       
         /* OTIMIZAÇÃO DE GPU PARA TABELAS */
         .table-wrap { background: var(--bg-card); border: 1px solid var(--border); border-radius: 0 12px 12px 12px; padding: 0; overflow: hidden; height: 680px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); display: flex; flex-direction: column; will-change: transform; transform: translateZ(0); }
         .table-wrap.hist-wrap { border-radius: 12px; height: 70vh; }
@@ -186,32 +186,184 @@
         .neon-match { color: #fde047 !important; text-shadow: 0 0 10px rgba(234, 179, 8, 0.8) !important; font-weight: 900 !important; }
         .neon-both { background: linear-gradient(90deg, #d8b4fe 0%, #fde047 100%); -webkit-background-clip: text; background-clip: text; color: transparent !important; font-weight: 900 !important; filter: drop-shadow(0px 0px 4px rgba(255,255,255,0.4)); }
 
+        /* DESTAQUE ENVELOPADO (PADRONIZADO EM INPUTS E SPANS) */
+        .input-envelopado {
+            border: 1px solid #f59e0b !important;
+            box-shadow: 0 0 8px rgba(245, 158, 11, 0.2) !important;
+            background: rgba(245, 158, 11, 0.05) !important;
+        }
+        .box-envelopado {
+            border: 1px solid #f59e0b !important;
+            box-shadow: 0 0 8px rgba(245, 158, 11, 0.2) !important;
+            background: rgba(245, 158, 11, 0.05) !important;
+            padding: 3px 6px;
+            border-radius: 4px;
+            display: inline-block;
+        }
+
         /* HISTÓRICO PREMIUM ESTILO (COMPACTO) */
         #t4 { border-collapse: separate; border-spacing: 0; }
         #t4 th { padding: 12px 4px; border-bottom: 2px solid #1e293b; background: #0b1120; white-space: nowrap; font-size: 9px; }
         #t4 td { padding: 6px 4px; font-size: 10px; border-bottom: 1px solid rgba(255,255,255,0.03); transition: 0.2s; }
-        
+       
         #t4 th:nth-child(1) { position: sticky; left: 0; z-index: 30; min-width: 140px; border-right: 1px solid rgba(255,255,255,0.05); }
         #t4 th:nth-child(2) { position: sticky; left: 140px; z-index: 30; min-width: 60px; border-right: 1px solid rgba(255,255,255,0.05); }
         #t4 th:nth-child(3) { position: sticky; left: 200px; z-index: 30; min-width: 70px; box-shadow: 8px 0 15px -8px rgba(0,0,0,0.8); }
-        
+       
         #t4 td:nth-child(1) { position: sticky; left: 0; z-index: 20; background: var(--bg-card); font-weight: 600; color: #f8fafc; border-right: 1px solid rgba(255,255,255,0.05); font-size: 11px; }
         #t4 td:nth-child(2) { position: sticky; left: 140px; z-index: 20; background: var(--bg-card); font-family: monospace; color: #94a3b8; border-right: 1px solid rgba(255,255,255,0.05); font-size: 11px; }
         #t4 td:nth-child(3) { position: sticky; left: 200px; z-index: 20; background: var(--bg-card); box-shadow: 8px 0 15px -8px rgba(0,0,0,0.8); font-size: 10px; color: #cbd5e1; font-weight: 600; text-align: center; }
-        
+       
         #t4 td:last-child { position: sticky; right: 0; z-index: 20; background: #0f172a; font-weight: 900; font-size: 14px; color: var(--brand); border-left: 1px solid rgba(238,77,45,0.2); box-shadow: -8px 0 15px -8px rgba(0,0,0,0.8); text-align: center; }
         #t4 th:last-child { position: sticky; right: 0; z-index: 30; background: #0b1120; border-left: 1px solid var(--brand); color: #fff; box-shadow: -8px 0 15px -8px rgba(0,0,0,0.8); text-align: center; }
 
         .hist-cell-val { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 6px; font-weight: 800; font-size: 11px; margin: 0 auto; transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: inset 0 0 10px rgba(0,0,0,0.2); letter-spacing: -0.5px; }
         .hist-cell-val:hover { transform: scale(1.15) translateY(-2px); z-index: 10; box-shadow: 0 8px 20px rgba(0,0,0,0.4); }
-        
+       
         .hist-cell-am { background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); }
         .hist-cell-pm { background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3); }
         .hist-cell-ampm { background: linear-gradient(135deg, rgba(16, 185, 129, 0.3) 50%, rgba(245, 158, 11, 0.3) 50%); color: #fff; border: 1px solid rgba(255,255,255,0.2); text-shadow: 0px 1px 2px rgba(0,0,0,0.8); }
-        
+       
         .hist-cell-ok { background: rgba(59, 130, 246, 0.15); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.3); }
         .hist-cell-rej { background: rgba(255, 0, 60, 0.15); color: #ff003c; border: 1px solid rgba(255, 0, 60, 0.4); box-shadow: 0 0 15px rgba(255, 0, 60, 0.15); }
         .hist-cell-null { color: #334155; font-weight: 400; display: block; text-align: center; width: 100%; font-size: 11px;}
+
+        /* ================= ABA ROTAÇÃO DE RODÍZIO (estilos novos, prefixo rod-) ================= */
+        .rod-container { max-width: 1400px; margin: 20px auto; padding: 0 20px; }
+        .rod-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 15px; flex-wrap: wrap; margin-bottom: 16px; }
+        .rod-head p { margin: 0; color: var(--text-muted); font-size: 12px; }
+
+        .rod-cats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-bottom: 16px; }
+        .rod-cat { position: relative; background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px 12px 17px; cursor: pointer; transition: 0.2s; overflow: hidden; }
+        .rod-cat::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--cat); opacity: 0.35; transition: 0.2s; }
+        .rod-cat:hover { border-color: #334155; }
+        .rod-cat.active { border-color: var(--cat); background: linear-gradient(180deg, color-mix(in srgb, var(--cat) 8%, var(--bg-card)) 0%, var(--bg-card) 70%); }
+        .rod-cat.active::before { opacity: 1; }
+        .rod-cat-head { display: flex; align-items: center; gap: 10px; }
+        .rod-cat-icon { width: 32px; height: 32px; flex-shrink: 0; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px; background: color-mix(in srgb, var(--cat) 15%, transparent); color: var(--cat); }
+        .rod-cat-name { font-family: 'Montserrat'; font-weight: 800; font-size: 13px; text-transform: uppercase; line-height: 1.1; }
+        .rod-cat-sub { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+        .rod-verdict { margin-left: auto; font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.3px; padding: 3px 7px; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; border: 1px solid; }
+        .rod-cat-body { display: flex; align-items: center; gap: 12px; margin-top: 10px; }
+        .rod-ring { position: relative; width: 52px; height: 52px; flex-shrink: 0; }
+        .rod-ring svg { transform: rotate(-90deg); }
+        .rod-ring-val { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1; }
+        .rod-ring-val b { font-family: 'Montserrat'; font-size: 13px; }
+        .rod-ring-val span { font-size: 7px; color: var(--text-muted); text-transform: uppercase; margin-top: 2px; }
+        .rod-metrics { flex: 1; display: grid; grid-template-columns: repeat(3, 1fr); min-width: 0; }
+        .rod-metric { text-align: center; padding: 0 4px; border-left: 1px solid rgba(255,255,255,0.06); }
+        .rod-metric:first-child { border-left: none; }
+        .rod-metric b { font-family: 'Montserrat'; font-size: 16px; display: block; line-height: 1.1; white-space: nowrap; }
+        .rod-metric span { font-size: 8.5px; color: var(--text-muted); text-transform: uppercase; }
+        .rod-dist { display: flex; height: 5px; border-radius: 4px; overflow: hidden; margin-top: 10px; background: #1e293b; gap: 2px; }
+        .rod-dist div { height: 100%; }
+        .rod-dist-lbl { display: flex; justify-content: space-between; font-size: 9.5px; margin-top: 4px; }
+        .rod-sub-media { margin-top: 8px; display: flex; gap: 5px; flex-wrap: wrap; }
+        .rod-sub-media span { font-size: 9.5px; color: #cbd5e1; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07); padding: 2px 6px; border-radius: 4px; }
+        .rod-sub-media b { color: #fff; }
+        .rod-empty-cat { color: #64748b; font-size: 11px; margin-top: 14px; font-style: italic; }
+
+        .rod-wrap { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
+        .rod-scroll { overflow: auto; max-height: 60vh; overscroll-behavior: contain; }
+        .rod-scroll::-webkit-scrollbar { height: 10px; width: 10px; }
+        .rod-scroll::-webkit-scrollbar-track { background: #020617; }
+        .rod-scroll::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
+        #rod-fila td { padding: 7px 10px; }
+        #rod-fila th { padding: 11px 10px; }
+        .rod-pos { display: inline-flex; width: 26px; height: 26px; align-items: center; justify-content: center; border-radius: 6px; background: rgba(255,255,255,0.05); font-weight: 800; font-size: 11px; }
+        .rod-pos.next { background: var(--brand); color: #fff; }
+        .rod-bar { position: relative; height: 8px; width: 180px; background: #1e293b; border-radius: 6px; }
+        .rod-bar-fill { height: 100%; border-radius: 6px; }
+        .rod-bar-avg { position: absolute; top: -4px; width: 2px; height: 16px; background: #fff; opacity: 0.6; }
+        .rod-badge { padding: 3px 8px; border-radius: 4px; font-size: 10px; font-weight: 800; text-transform: uppercase; border: 1px solid; }
+        .rod-b-low { color: #60a5fa; background: rgba(59,130,246,0.12); border-color: rgba(59,130,246,0.35); }
+        .rod-b-ok { color: #34d399; background: rgba(16,185,129,0.12); border-color: rgba(16,185,129,0.35); }
+        .rod-b-high { color: #f87171; background: rgba(239,68,68,0.12); border-color: rgba(239,68,68,0.35); }
+        .rod-shift { font-size: 9px; font-weight: 800; padding: 2px 5px; border-radius: 4px; margin-right: 3px; }
+        .rod-s-am { background: rgba(16,185,129,0.15); color: #10b981; }
+        .rod-s-pm { background: rgba(245,158,11,0.15); color: #f59e0b; }
+        .rod-legend { display: flex; gap: 18px; font-size: 11px; color: var(--text-muted); padding: 12px 15px; border-top: 1px solid var(--border); background: #0b1120; flex-wrap: wrap; }
+
+        .rod-section-title { font-family: 'Montserrat'; font-weight: 800; font-size: 18px; text-transform: uppercase; margin: 36px 0 6px; display: flex; align-items: center; gap: 10px; }
+        .rod-section-sub { color: var(--text-muted); font-size: 12px; margin: 0 0 14px; }
+        .rod-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px; }
+        .rod-stat { background: var(--bg-card); padding: 12px; border-radius: 10px; border: 1px solid var(--border); text-align: center; }
+        .rod-stat-val { font-size: 20px; font-weight: 700; font-family: 'Montserrat', sans-serif; }
+        .rod-stat-lbl { font-size: 9.5px; color: var(--text-muted); text-transform: uppercase; margin-top: 3px; }
+        .rod-panel { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+        .rod-panel h3 { margin: 0 0 15px; font-size: 13px; text-transform: uppercase; color: #cbd5e1; }
+        .rod-pill { display: inline-flex; align-items: center; justify-content: center; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 6px; font-weight: 800; font-size: 11px;
+            background: linear-gradient(135deg, rgba(16,185,129,0.3) 50%, rgba(245,158,11,0.3) 50%); border: 1px solid rgba(255,255,255,0.2); color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.8); }
+        .rod-zero { color: #334155; }
+
+        .rod-cal-grid { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 14px; margin-bottom: 16px; }
+        .rod-cal-legend { display: flex; gap: 12px; flex-wrap: wrap; font-size: 10px; color: var(--text-muted); }
+        .rod-lg { display: inline-block; width: 10px; height: 10px; border-radius: 3px; vertical-align: -1px; margin-right: 3px; }
+        .rod-lg-dobra { background: rgba(238,77,45,0.35); border: 1px solid var(--brand); }
+        .rod-lg-ok { background: rgba(16,185,129,0.2); border: 1px solid #10b981; }
+        .rod-lg-inc { background: rgba(245,158,11,0.15); border: 1px dashed #f59e0b; }
+        .rod-lg-none { background: #0b1120; border: 1px solid #1e293b; }
+        .rod-cal-week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; margin-bottom: 5px; }
+        .rod-cal-week span { text-align: center; font-size: 9px; font-weight: 700; text-transform: uppercase; color: #64748b; }
+        .rod-cal-week span:first-child { color: #c084fc; }
+        .rod-cal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
+        .rod-day { min-height: 52px; border-radius: 7px; padding: 5px 7px; cursor: pointer; border: 1px solid #1e293b; background: #0b1120; transition: 0.15s; overflow: hidden; }
+        .rod-day:hover { transform: translateY(-1px); border-color: #475569; }
+        .rod-day-empty { visibility: hidden; }
+        .rod-day-top { display: flex; justify-content: space-between; align-items: center; }
+        .rod-day-top b { font-size: 12px; font-family: 'Montserrat'; }
+        .rod-day-t .t { font-size: 7px; font-weight: 800; padding: 1px 3px; border-radius: 2px; margin-left: 2px; color: #334155; background: rgba(255,255,255,0.03); }
+        .rod-day-t .t.on { color: #cbd5e1; background: rgba(255,255,255,0.1); }
+        .rod-day-n { font-size: 11px; font-weight: 800; color: #fff; margin-top: 3px; }
+        .rod-day-st { font-size: 9.5px; margin-top: 5px; font-weight: 600; }
+        .rod-d-dobra { background: rgba(238,77,45,0.16); border-color: rgba(238,77,45,0.6); }
+        .rod-d-ok { background: rgba(16,185,129,0.07); border-color: rgba(16,185,129,0.3); }
+        .rod-d-ok .rod-day-st { color: #34d399; }
+        .rod-d-inc { background: rgba(245,158,11,0.06); border: 1px dashed rgba(245,158,11,0.6); }
+        .rod-d-inc .rod-day-st { color: #fbbf24; }
+        .rod-d-none .rod-day-st { color: #475569; }
+        .rod-day.today { box-shadow: inset 0 -2px 0 var(--brand); }
+        .rod-day.sel { outline: 2px solid #fff; outline-offset: 1px; }
+
+        .rod-detail { padding: 16px; }
+        .rod-det-empty { color: #64748b; font-size: 12px; text-align: center; padding: 40px 10px; line-height: 1.6; }
+        .rod-det-empty i { font-size: 22px; color: #334155; margin-bottom: 6px; }
+        .rod-det-date { font-family: 'Montserrat'; font-weight: 800; font-size: 20px; }
+        .rod-det-dow { color: var(--text-muted); font-size: 11px; margin-bottom: 10px; }
+        .rod-det-v { font-size: 11.5px; font-weight: 700; padding: 8px 10px; border-radius: 6px; margin-bottom: 10px; display: flex; gap: 7px; align-items: center; }
+        .rod-v-dobra { background: rgba(238,77,45,0.15); color: #fb923c; }
+        .rod-v-ok { background: rgba(16,185,129,0.12); color: #34d399; }
+        .rod-v-inc { background: rgba(245,158,11,0.12); color: #fbbf24; }
+        .rod-v-none { background: rgba(255,255,255,0.04); color: #94a3b8; }
+        .rod-det-imp { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 10px; }
+        .rod-det-imp div { background: #0b1120; border: 1px solid #1e293b; border-radius: 6px; padding: 6px 8px; }
+        .rod-det-imp div.on { border-color: rgba(16,185,129,0.35); }
+        .rod-det-imp span { display: block; font-size: 9px; color: #64748b; text-transform: uppercase; }
+        .rod-det-imp b { font-size: 10.5px; color: #64748b; }
+        .rod-det-imp div.on b { color: #e2e8f0; }
+        .rod-det-txt { color: #94a3b8; font-size: 11px; line-height: 1.5; }
+
+        #rod-matriz { border-collapse: separate; border-spacing: 0; }
+        #rod-matriz th { padding: 12px 4px; font-size: 9px; text-align: center; }
+        #rod-matriz td { padding: 6px 4px; font-size: 10px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.03); }
+        #rod-matriz th:nth-child(1), #rod-matriz td:nth-child(1) { position: sticky; left: 0; z-index: 20; background: var(--bg-card); text-align: left; min-width: 170px; max-width: 170px; overflow: hidden; text-overflow: ellipsis; font-weight: 600; font-size: 11px; border-right: 1px solid rgba(255,255,255,0.05); }
+        #rod-matriz th:nth-child(2), #rod-matriz td:nth-child(2) { position: sticky; left: 170px; z-index: 20; background: var(--bg-card); min-width: 70px; font-weight: 600; color: #cbd5e1; border-right: 1px solid rgba(255,255,255,0.05); }
+        #rod-matriz th:nth-child(3), #rod-matriz td:nth-child(3) { position: sticky; left: 240px; z-index: 20; background: var(--bg-card); min-width: 62px; box-shadow: 8px 0 15px -8px rgba(0,0,0,0.8); }
+        #rod-matriz th:nth-child(1), #rod-matriz th:nth-child(2), #rod-matriz th:nth-child(3) { background: #0b1120; z-index: 30; }
+        #rod-matriz td.rod-col-dias { font-weight: 900; font-size: 13px; color: #a5f3fc; }
+        #rod-matriz td:last-child, #rod-matriz th:last-child { position: sticky; right: 0; z-index: 20; background: #0f172a; font-weight: 900; font-size: 14px; color: var(--brand); border-left: 1px solid rgba(238,77,45,0.2); box-shadow: -8px 0 15px -8px rgba(0,0,0,0.8); min-width: 60px; }
+        #rod-matriz th:last-child { background: #0b1120; color: #fff; z-index: 30; }
+        #rod-matriz tfoot td { background: #0b1120; font-weight: 800; color: #fbbf24; font-size: 11px; border-top: 2px solid var(--border); position: sticky; bottom: 0; z-index: 15; }
+        #rod-matriz tfoot td:nth-child(1), #rod-matriz tfoot td:nth-child(2), #rod-matriz tfoot td:nth-child(3), #rod-matriz tfoot td:last-child { background: #0b1120; z-index: 35; }
+        #rod-matriz .rod-col-sel { background: rgba(255,255,255,0.06) !important; box-shadow: inset 1px 0 0 rgba(255,255,255,0.25), inset -1px 0 0 rgba(255,255,255,0.25); }
+        #rod-matriz th.rod-col-sel { color: #fff !important; }
+        #rod-matriz .rod-sun { color: #c084fc !important; }
+
+        @media (max-width: 1000px) {
+            .rod-cats { grid-template-columns: 1fr; }
+            .rod-cal-grid { grid-template-columns: 1fr; }
+            .rod-stats { grid-template-columns: repeat(2, 1fr); }
+        }
 
         /* FOOTER & BUTTONS */
         .footer-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(10px); padding: 15px 30px; border-top: 1px solid var(--border); display: flex; justify-content: center; align-items: center; z-index: 2000; box-shadow: 0 -10px 40px rgba(0,0,0,0.5); }
@@ -223,13 +375,13 @@
         .btn-clear:hover { background: #ef4444; color: white; transform: translateY(-2px); box-shadow: 0 8px 25px rgba(239, 68, 68, 0.4); }
         .btn-add-driver { background: #3b82f6; color: white; border: none; padding: 12px 25px; border-radius: 8px; font-weight: 700; font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 8px; text-transform: uppercase; margin-right: 15px; }
         .btn-add-driver:hover { background: #2563eb; transform: translateY(-2px); }
-        
+       
         .btn-pull-area { padding: 15px; background: #0b1120; border-top: 1px solid var(--border); text-align: center; display: flex; justify-content: center; gap: 15px; flex-shrink: 0; }
         .btn-pull { background: rgba(245, 158, 11, 0.1); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); padding: 10px 25px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 11px; width: 100%; max-width: 400px; transition: 0.2s; text-transform: uppercase; letter-spacing: 1px; }
         .btn-pull:hover { background: rgba(245, 158, 11, 0.2); border-color: #fbbf24; }
 
         .hidden { display: none !important; }
-        
+       
         /* CUSTOM POPUP */
         .custom-popup { position: absolute; background: #1e293b; border: 1px solid #334155; width: 380px; max-height: 250px; overflow-y: auto; z-index: 9999; box-shadow: 0 10px 40px rgba(0,0,0,0.6); border-radius: 8px; font-size: 11px; }
         .popup-item { padding: 10px 15px; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center; transition: 0.1s; }
@@ -257,12 +409,12 @@
     <div class="login-box">
         <h2 class="login-title">ACESSO RESTRITO</h2>
         <div class="login-subtitle">Sinergia <span style="color: var(--brand); font-weight: 800;">Xpress</span></div>
-        
+       
         <div id="login-error">Credenciais inválidas. Tente novamente.</div>
-        
+       
         <input type="email" id="login-email" class="login-input" placeholder="E-mail de acesso" autocomplete="email">
         <input type="password" id="login-password" class="login-input" placeholder="Senha" autocomplete="current-password">
-        
+       
         <button class="btn-login" id="btn-do-login" onclick="realizarLogin()">Entrar no Sistema</button>
     </div>
 </div>
@@ -290,6 +442,7 @@
         <div class="nav-module" onclick="switchModule('historico', this)"><i class="fa-solid fa-clock-rotate-left"></i> HISTÓRICO DE ALOCAÇÃO</div>
         <div class="nav-module" onclick="switchModule('patio', this)"><i class="fa-solid fa-chart-pie"></i> DASHBOARD PÁTIO</div>
         <div class="nav-module" onclick="switchModule('analise', this)"><i class="fa-solid fa-route"></i> HISTÓRICO DE ROTAS</div>
+        <div class="nav-module" onclick="switchModule('rodizio', this); loadRodizio();"><i class="fa-solid fa-arrows-rotate"></i> ROTAÇÃO DE RODÍZIO</div>
     </nav>
 
     <div id="module-alocacao" class="module-section active">
@@ -302,14 +455,14 @@
                     <p style="margin:0; color:#94a3b8; font-size: 12px;">Visual de Clusters 100% do Arquivo</p>
                     <input type="file" id="upl" accept=".xlsx" style="display:none">
                 </div>
-                
+               
                 <div id="loading-overlay"><i class="fa-solid fa-microchip"></i> PROCESSANDO MATCH PRECISO...</div>
 
                 <div class="settings-area">
                     <label class="switch-label"><input type="checkbox" id="checkRodizio" checked> Rodízio Aleatório (Desempate)</label>
                     <label class="switch-label"><input type="checkbox" id="checkAll" checked> Utilizar Curingas (All)</label>
                 </div>
-                
+               
                 <div id="debug-log" style="margin-top:20px; color:#64748b; font-family:monospace; font-size:10px; text-align:center;"></div>
             </div>
 
@@ -357,7 +510,7 @@
                             <tbody id="b-mot"></tbody>
                         </table>
                     </div>
-                    
+                   
                     <div id="pull-area" class="btn-pull-area">
                         <button class="btn-pull" onclick="pullRemainingRoutes()">
                             <i class="fa-solid fa-arrow-down"></i> PUXAR ROTAS SOBRANDO
@@ -370,7 +523,7 @@
 
     <div id="module-historico" class="module-section">
         <div class="container">
-            
+           
             <div style="background: var(--bg-card); padding: 25px; border-radius: 16px; border: 1px solid var(--border); margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
                 <div>
                     <h3 style="margin: 0 0 8px 0; color: #f8fafc; font-size: 18px;"><i class="fa-solid fa-file-import" style="color: var(--brand);"></i> Importar Presença e Cluster</h3>
@@ -404,7 +557,7 @@
                     <input type="month" id="month-picker" class="ui-input" style="padding: 8px 15px;" onchange="loadSpecificMonth(this.value)">
                 </div>
             </div>
-            
+           
             <div class="table-wrap hist-wrap">
                 <div class="table-scroll">
                     <table id="t4">
@@ -419,7 +572,7 @@
     <div id="module-patio" class="module-section">
         <div class="container" style="max-width: 1400px;">
             <h1 class="hero-title" style="margin-top: 20px;">Dashboard Pátio</h1>
-            
+           
             <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                 <h2 style="margin:0;">Indicadores de Veículos e Rotas</h2>
                 <div style="display:flex; gap:10px; align-items: center;">
@@ -438,7 +591,7 @@
                     <canvas id="chart-semanal"></canvas>
                 </div>
             </div>
-            
+           
             <div style="background: var(--bg-card); padding: 20px; border-radius: 12px; border: 1px solid var(--border);">
                 <h3 style="text-align: center; color: #f8fafc; margin-top: 0; margin-bottom: 20px;">Volume de Rotas Diárias (Desdobrado por Tipo)</h3>
                 <canvas id="chart-mensal"></canvas>
@@ -449,7 +602,7 @@
     <div id="module-analise" class="module-section">
         <div class="container">
             <h1 class="hero-title" style="margin-top: 20px;">Histórico de Rotas</h1>
-            
+           
             <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                 <p style="margin: 0; color: #94a3b8; font-size: 13px;">Cruzamento estatístico de assiduidade no mês e levantamento das Rotas/Clusters (Extraído da Coluna E do Pátio).</p>
                 <div style="display:flex; gap:10px; align-items: center;">
@@ -472,6 +625,85 @@
                             </tr>
                         </thead>
                         <tbody id="b-analise"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= ABA NOVA: ROTAÇÃO DE RODÍZIO (somente leitura) ================= -->
+    <div id="module-rodizio" class="module-section">
+        <div class="rod-container">
+            <div class="rod-head">
+                <div>
+                    <h1 class="hero-title" style="font-size:24px; margin:0 0 6px 0;">Rotação de Rodízio</h1>
+                    <p>Equilíbrio de dias trabalhados no mês por tipo de veículo. A fila mostra quem deve ser chamado primeiro.</p>
+                </div>
+                <div style="display:flex; gap:10px; align-items:center;">
+                    <input type="text" id="rod-busca" class="ui-input" placeholder="🔍 Buscar Motorista..." style="padding:8px 15px; width:220px;" oninput="rodRender()">
+                    <input type="month" id="rod-month" class="ui-input" style="padding:8px 15px;" onchange="loadRodizio(this.value)">
+                </div>
+            </div>
+
+            <div class="rod-cats" id="rod-cats"></div>
+
+            <div class="rod-wrap">
+                <div class="rod-scroll">
+                    <table id="rod-fila">
+                        <thead><tr>
+                            <th style="text-align:center;">Fila</th>
+                            <th>Motorista</th>
+                            <th>Veículo</th>
+                            <th style="text-align:center;">Dias no Mês</th>
+                            <th>Turnos</th>
+                            <th style="text-align:center;">Dobras</th>
+                            <th>Última Rota</th>
+                            <th>Comparado à Média</th>
+                            <th style="text-align:center;">Situação</th>
+                        </tr></thead>
+                        <tbody id="rod-fila-body"></tbody>
+                    </table>
+                </div>
+                <div class="rod-legend">
+                    <span><span class="rod-badge rod-b-low">Abaixo</span> rodou menos que a média, deve ser priorizado</span>
+                    <span><span class="rod-badge rod-b-ok">Equilibrado</span> dentro de ±20% da média</span>
+                    <span><span class="rod-badge rod-b-high">Acima</span> rodou mais que a média</span>
+                    <span>▏ linha branca = média da categoria</span>
+                </div>
+            </div>
+
+            <!-- DOBRAS -->
+            <div class="rod-section-title"><span class="rod-pill">2</span> Dobras (AM + PM no mesmo dia)</div>
+            <p class="rod-section-sub" id="rod-dobra-sub"></p>
+
+            <div class="rod-stats" id="rod-dobra-stats"></div>
+
+            <div class="rod-cal-grid">
+                <div class="rod-panel" style="padding:14px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:8px;">
+                        <h3 style="margin:0;" id="rod-cal-title"><i class="fa-solid fa-calendar-days" style="color:var(--brand)"></i> Calendário de Dobras</h3>
+                        <div class="rod-cal-legend">
+                            <span><i class="rod-lg rod-lg-dobra"></i> Teve dobra</span>
+                            <span><i class="rod-lg rod-lg-ok"></i> Sem dobra (AM e PM importados)</span>
+                            <span><i class="rod-lg rod-lg-inc"></i> Incompleto (falta um turno)</span>
+                            <span><i class="rod-lg rod-lg-none"></i> Sem registro</span>
+                        </div>
+                    </div>
+                    <div class="rod-cal-week"><span>Dom</span><span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span></div>
+                    <div class="rod-cal" id="rod-cal"></div>
+                </div>
+                <div class="rod-panel rod-detail" id="rod-cal-detail"></div>
+            </div>
+
+            <div class="rod-wrap">
+                <div style="padding:14px 15px; border-bottom:1px solid var(--border); font-size:13px; font-weight:700; text-transform:uppercase; color:#cbd5e1;">
+                    <i class="fa-solid fa-table-cells" style="color:var(--brand)"></i> Matriz de Dobras <span style="color:#64748b; font-weight:500; text-transform:none; font-size:11px;">— mesmo formato do Histórico de Alocação, só com os dias de AM + PM</span>
+                </div>
+                <div class="rod-scroll">
+                    <table id="rod-matriz">
+                        <thead id="rod-matriz-head"></thead>
+                        <tbody id="rod-matriz-body"></tbody>
+                        <tfoot id="rod-matriz-foot"></tfoot>
                     </table>
                 </div>
             </div>
@@ -502,8 +734,19 @@
 </div>
 
 <script>
+    // Aviso amigável caso as bibliotecas do Firebase não carreguem (sem internet, rede bloqueada ou pré-visualização)
+    if (typeof firebase === 'undefined') {
+        var avisoFb = document.getElementById('login-error');
+        avisoFb.innerHTML = 'Não foi possível conectar ao Firebase.<br>Verifique a internet e abra o arquivo direto no Google Chrome.';
+        avisoFb.style.display = 'block';
+        document.getElementById('btn-do-login').disabled = true;
+        document.getElementById('btn-do-login').style.opacity = '0.5';
+    }
+</script>
+
+<script>
     // =====================================================================
-    // SETUP FIREBASE
+    // SETUP FIREBASE — SPX LOGÍSTICA ONLINE
     // =====================================================================
     const firebaseConfig = {
         apiKey: "AIzaSyBxzyFdum86noYdpQnldyjX4wiPB7IJEMY",
@@ -517,12 +760,12 @@
 
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
-    
+   
     // =====================================================================
     // AUTENTICAÇÃO E LOGIN PERSISTENTE
     // =====================================================================
     const auth = firebase.auth();
-    
+   
     auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
 
     auth.onAuthStateChanged((user) => {
@@ -542,7 +785,7 @@
         const pass = document.getElementById('login-password').value;
         const btn = document.getElementById('btn-do-login');
         const errorMsg = document.getElementById('login-error');
-        
+       
         if(!email || !pass) {
             errorMsg.innerText = "Preencha e-mail e senha.";
             errorMsg.style.display = 'block';
@@ -587,13 +830,14 @@
     let hoje = new Date();
     document.getElementById('patio-date').value = hoje.toISOString().split('T')[0];
 
-    window.currentMonthDriverCounts = {}; 
-    window.lastWorkedShift = {}; 
-    window.historyListenerRef = null; 
-    window.driverOriginalData = {}; 
-    window.activeSwapCluster = ""; 
-    
+    window.currentMonthDriverCounts = {};
+    window.lastWorkedShift = {};
+    window.historyListenerRef = null;
+    window.driverOriginalData = {};
+    window.activeSwapCluster = "";
+   
     window.currentSundayDrivers = new Set();
+    window.envelopadosSet = new Set();
     window.lastSundayTargetCode = "";
 
     function switchModule(mod, el) {
@@ -624,29 +868,23 @@
     }
 
     // =====================================================================
-    // CORREÇÃO: LÓGICA DE HORÁRIOS APRIMORADA (PRIMEIRO HORÁRIO DE CADA LINHA)
+    // LÓGICA DE HORÁRIOS APRIMORADA
     // =====================================================================
     function calcTurno(turnoVal, horaVal) {
         let hStr = String(horaVal || "").toUpperCase();
         let hasAM = false;
         let hasPM = false;
 
-        // Separa as linhas por quebra de linha, vírgula ou pipe
         let linhas = hStr.split(/[\r\n,;\|]+/);
-        
+       
         for (let linha of linhas) {
-            // Pega APENAS o primeiro formato HH:MM que aparecer na linha 
-            // (ex: na string "09:30-12:30", ele vai pegar só o "09:30")
             let match = linha.match(/(\d{1,2}):(\d{2})/);
             if (match) {
                 let h = parseInt(match[1], 10);
                 let m = parseInt(match[2], 10);
-                let t = h * 60 + m; 
-                
-                // Janela AM: 04:00 (240 min) até 09:45 (585 min)
+                let t = h * 60 + m;
+               
                 if (t >= 240 && t <= 585) hasAM = true;
-                
-                // Janela PM: 10:00 (600 min) até 15:00 (900 min)
                 if (t >= 600 && t <= 900) hasPM = true;
             }
         }
@@ -655,16 +893,14 @@
         if (hasAM) return "AM";
         if (hasPM) return "PM";
 
-        // Fallback: caso a coluna de horário esteja vazia, tenta ler o Turno (Coluna D)
         let tStr = String(turnoVal || "").toUpperCase();
         if (tStr.includes("AM") && tStr.includes("PM")) return "AM / PM";
         if (tStr.includes("AM")) return "AM";
         if (tStr.includes("PM")) return "PM";
-        
-        return "AM"; // Padrão
+       
+        return "AM";
     }
 
-    // Helper para criar a bolinha de turno piscante baseada no último turno trabalhado APENAS como indicação visual
     function getShiftDot(turno) {
         let t = String(turno || "").toUpperCase();
         if (t.includes("AM") && t.includes("PM")) {
@@ -679,8 +915,8 @@
 
     let store = { allocated: [], routes: [], drivers: [], filename: "" };
     let db = { dataCode: "" };
-    let driverMap = {}; 
-    let allDriversList = []; 
+    let driverMap = {};
+    let allDriversList = [];
 
     const cleanBasic = t => String(t||"").toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim();
     function getTokens(str) { if(!str) return []; let s = cleanBasic(str); let rawParts = s.split(/[\;\,\|\/\-\n\r]/); let tokens = []; for(let p of rawParts) { let t = p.trim().replace(/^[^A-Z0-9]+|[^A-Z0-9]+$/g, ""); if(t.length > 2) tokens.push(t); } return tokens; }
@@ -692,9 +928,9 @@
     function formatDate(d) { return `${String(d.getDate()).padStart(2,'0')}-${String(d.getMonth()+1).padStart(2,'0')}-${d.getFullYear()}`; }
 
     function findHeaderRow(ws) { let range = XLSX.utils.decode_range(ws['!ref']); for(let R=range.s.r; R<= Math.min(range.e.r, 15); ++R) { for(let C=range.s.c; C<=range.e.c; ++C) { let cell = ws[XLSX.utils.encode_cell({r:R, c:C})]; if(cell && cell.v) { let v = String(cell.v).toLowerCase(); if(v.includes("rota") || v.includes("at /") || v.includes("motorista")) return R; } } } return 0; }
-    
+   
     function mapColumns(ws, rowIdx) {
-        let map = { rotaAt:'A', atTo:'B', letra:'C', clusterR:'F', litragem:'T', nome:'A', id:'C', clusterM:'E', veic:'H', rodou:'B', hora:'G', turno:'D' };
+        let map = { rotaAt:'A', atTo:'B', letra:'C', clusterR:'F', litragem:'T', nome:'A', id:'C', clusterM:'E', veic:'H', rodou:'B', hora:'G', turno:'D', envelopado:'Z' };
         let range = XLSX.utils.decode_range(ws['!ref']);
         for(let C=range.s.c; C<=range.e.c; ++C) {
             let cell = ws[XLSX.utils.encode_cell({r:rowIdx, c:C})];
@@ -712,6 +948,7 @@
             if(h.includes("rodou")) map.rodou = colLet;
             if(h.includes("hora") || h.includes("carimbo") || h.includes("preenchimento")) map.hora = colLet;
             if(h === "turno" || h === "período" || h === "periodo" || h.includes("horário") || h.includes("horario")) map.turno = colLet;
+            if(h.includes("envelopado") || h.includes("envelopamento")) map.envelopado = colLet;
         }
         return map;
     }
@@ -720,17 +957,18 @@
         if(!e.target.files[0]) return;
         store = { allocated: [], routes: [], drivers: [], filename: "" };
         driverMap = {}; allDriversList = []; window.currentMonthDriverCounts = {};
-        window.driverOriginalData = {}; 
-        
+        window.driverOriginalData = {};
+        window.envelopadosSet = new Set();
+       
         document.getElementById('b-alocados').innerHTML = "";
-        document.getElementById('loading-overlay').style.display = 'block'; 
-        
+        document.getElementById('loading-overlay').style.display = 'block';
+       
         const r = new FileReader();
         r.onload = function(evt) {
-            setTimeout(async () => { 
+            setTimeout(async () => {
                 try {
-                    const wb = XLSX.read(evt.target.result, {type: 'array', cellDates: true});
-                    await new Promise(res => setTimeout(res, 10)); 
+                    const wb = XLSX.read(evt.target.result, {type: 'array', cellDates: true, cellStyles: true});
+                    await new Promise(res => setTimeout(res, 10));
                     const sR = wb.SheetNames.find(n => n.match(/romaneio/i));
                     const sM = wb.SheetNames.find(n => n.match(/motorista/i));
 
@@ -744,7 +982,7 @@
                         let lastSunday = new Date(fileDateObj.getFullYear(), fileDateObj.getMonth(), fileDateObj.getDate());
                         lastSunday.setDate(lastSunday.getDate() - lastSunday.getDay());
                         window.lastSundayTargetCode = getDateCode(lastSunday);
-                        
+                       
                         window.currentSundayDrivers = new Set();
                         try {
                             let snapSunday = await database.ref(`${DB_NODE}/${window.lastSundayTargetCode}`).once('value');
@@ -762,10 +1000,10 @@
                         let daysInMonth = new Date(parseInt(yyyy), parseInt(mm), 0).getDate();
                         let startCode = `${yyyy}${mm}01`;
                         let endCode = `${yyyy}${mm}${daysInMonth}`;
-                        
+                       
                         if(window.historyListenerRef) { window.historyListenerRef.off('value'); }
                         window.historyListenerRef = database.ref(DB_NODE).orderByKey().startAt(startCode).endAt(endCode);
-                        
+                       
                         try {
                             let snapMonth = await window.historyListenerRef.once('value');
                             if(snapMonth.exists()) processRealTimeCounts(snapMonth.val(), db.dataCode);
@@ -781,6 +1019,38 @@
                         let rowR = findHeaderRow(wsR); let mapR = mapColumns(wsR, rowR);
                         let rowM = findHeaderRow(wsM); let mapM = mapColumns(wsM, rowM);
                         document.getElementById('debug-log').innerHTML = `Litragem: Col ${mapR.litragem} | Cluster Base: Col ${mapR.clusterR} | Turno Driver: Col ${mapM.turno} | Hora Driver: Col ${mapM.hora}`;
+
+                        // ======= LER CÉLULAS LARANJAS (ENVELOPADOS) =======
+                        let rangeM = XLSX.utils.decode_range(wsM['!ref']);
+                        for(let R = rowM + 1; R <= rangeM.e.r; ++R) {
+                            let isEnv = false;
+                            let nomeMotorista = "";
+                            let colNome = XLSX.utils.decode_col(mapM.nome);
+                           
+                            for(let C = rangeM.s.c; C <= rangeM.e.c; ++C) {
+                                let cell = wsM[XLSX.utils.encode_cell({r:R, c:C})];
+                                if(cell) {
+                                    if(C === colNome && cell.v) nomeMotorista = String(cell.v).toUpperCase().trim();
+                                   
+                                    if(cell.s) {
+                                        let color = "";
+                                        if(cell.s.fill && cell.s.fill.fgColor && cell.s.fill.fgColor.rgb) color = cell.s.fill.fgColor.rgb;
+                                        else if(cell.s.bgColor && cell.s.bgColor.rgb) color = cell.s.bgColor.rgb;
+                                        else if(cell.s.fgColor && cell.s.fgColor.rgb) color = cell.s.fgColor.rgb;
+                                       
+                                        if(color) {
+                                            color = color.toUpperCase();
+                                            if(color.includes('FFC000') || color.includes('FFA500') || color.includes('ED7D31') ||
+                                               color.includes('F4B084') || color.includes('FF9900') || color.includes('FF8C00') ||
+                                               color.includes('E26B0A') || color.includes('F79646')) {
+                                                isEnv = true;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            if(isEnv && nomeMotorista) window.envelopadosSet.add(nomeMotorista);
+                        }
 
                         let rawRom = XLSX.utils.sheet_to_json(wsR, {header: "A", range: rowR + 1});
                         let rawMot = XLSX.utils.sheet_to_json(wsM, {header: "A", range: rowM + 1});
@@ -798,10 +1068,10 @@
 
     function processRealTimeCounts(histData, baseDataCode) {
         let driverCounts = {};
-        window.lastWorkedShift = {}; 
+        window.lastWorkedShift = {};
         let targetSundayInMonth = window.lastSundayTargetCode && window.lastSundayTargetCode.startsWith(baseDataCode.substring(0,6));
         let tempSundaySet = targetSundayInMonth ? new Set() : window.currentSundayDrivers;
-        
+       
         let sortedDays = Object.keys(histData).sort();
 
         sortedDays.forEach(dCode => {
@@ -811,7 +1081,7 @@
                 if (d.AM || d.PM || d.count > 0) {
                     let upperName = nome.toUpperCase();
                     driverCounts[upperName] = (driverCounts[upperName] || 0) + 1;
-                    
+                   
                     if(targetSundayInMonth && dCode === window.lastSundayTargetCode) {
                         tempSundaySet.add(upperName);
                     }
@@ -832,47 +1102,36 @@
         let rotasValidas = []; let ignored = 0;
         let useRodizio = document.getElementById('checkRodizio').checked;
         let useAll = document.getElementById('checkAll').checked;
-        
+       
         let targetTurno = (new Date().getHours() < 12) ? 'AM' : 'PM';
 
         rom.forEach(r => {
             let atCode = String(r[mapR.atTo] || r['B'] || "");
             let clusterVal = String(r[mapR.clusterR] || r['F'] || "");
-            
+           
             if(!atCode && !clusterVal) return;
-            
+           
             let rId = String(r[mapR.rotaAt] || r['A'] || "");
             if(!rId.toLowerCase().includes("rota") && rId.length > 0) rId = "Rota " + rId;
-            
-            rotasValidas.push({ 
-                raw: r, 
-                id: rId, 
-                at: atCode, 
-                letra: String(r['C'] || r[mapR.letra] || ""), 
-                cluster: clusterVal, 
-                st: 'pendente', 
-                litragem: String(r[mapR.litragem] || "-") 
+           
+            rotasValidas.push({
+                raw: r,
+                id: rId,
+                at: atCode,
+                letra: String(r['C'] || r[mapR.letra] || ""),
+                cluster: clusterVal,
+                st: 'pendente',
+                litragem: String(r[mapR.litragem] || "-")
             });
         });
 
-        // 1. ORDENAÇÃO DE ROTAS (Cluster Preference: Uberaba > Região)
-        let getClusterScore = (c) => {
-            let text = cleanBasic(c);
-            if (text.includes("UBERABA")) return 1;
-            let regioes = ["SACRAMENTO", "PONTE ALTA", "CAMPO FLORIDO", "CONCEICAO", "DELTA", "VERISSIMO", "IGARAPAVA"];
-            if (regioes.some(reg => text.includes(reg))) return 2;
-            return 3;
-        };
-        rotasValidas.sort((a, b) => getClusterScore(a.cluster) - getClusterScore(b.cluster));
-
-
         let frota = [];
-        let frotaIds = new Set(); 
+        let frotaIds = new Set();
 
         mot.forEach(m => {
             let nomeReal = String(m[mapM.nome]||"").trim();
             let nome = nomeReal.toUpperCase();
-            
+           
             if(frotaIds.has(nome)) {
                 ignored++; return;
             }
@@ -884,9 +1143,9 @@
             let valHora = m[mapM.hora];
             let turnoCalc = calcTurno(valTurno, valHora);
 
-            if(nome.length > 2 && !v.includes("MOTO")) { 
-                driverMap[nome] = id; 
-                allDriversList.push(nomeReal); 
+            if(nome.length > 2 && !v.includes("MOTO")) {
+                driverMap[nome] = id;
+                allDriversList.push(nomeReal);
                 frotaIds.add(nome);
             }
             if(v.includes("MOTO") || v.includes("PASSEIO")) { ignored++; return; }
@@ -894,57 +1153,66 @@
             if(v.includes("FIORINO") || v.includes("VAN") || v.includes("VUC") || v.includes("UTILITARIO") || v.includes("ENTREGA")) aceito = true;
 
             let cMotorista = String(m[mapM.clusterM]||"");
-            
+           
             if(nome.length > 2) {
-                window.driverOriginalData[nome] = { 
-                    veic: v, 
-                    cluster: cMotorista, 
+                window.driverOriginalData[nome] = {
+                    veic: v,
+                    cluster: cMotorista,
                     turno: turnoCalc
                 };
             }
 
             if(aceito && cMotorista.length > 1) {
-                frota.push({ nome: m[mapM.nome], id: id, cluster: cMotorista, veic: v, rodou: String(m[mapM.rodou]||"Não"), isAll: isAll(cMotorista), disp: true, turno: turnoCalc });
+                let vEnv = String(m[mapM.envelopado]||"").toUpperCase();
+                let isEnv = window.envelopadosSet.has(nome) || vEnv === "SIM" || vEnv === "S" || v.includes("ENV");
+                if(isEnv) window.envelopadosSet.add(nome);
+
+                frota.push({
+                    nome: m[mapM.nome],
+                    id: id,
+                    cluster: cMotorista,
+                    veic: v,
+                    rodou: String(m[mapM.rodou]||"Não"),
+                    isAll: isAll(cMotorista),
+                    disp: true,
+                    turno: turnoCalc,
+                    envelopado: isEnv
+                });
             }
         });
 
-        if(useRodizio) shuffle(frota); 
-        
-        // 2. ORDENAÇÃO DE MOTORISTAS (Turno > Rodízio > Dias Rodados > Cluster)
+        if(useRodizio) shuffle(frota);
+       
+        // ===== LÓGICA DE ORDENAÇÃO E NOVA PRIORIDADE =====
         frota.sort((a, b) => {
-            // Prioridade 1: Disponibilidade de Horário
+            // 1º Filtro: O motorista é compatível com o turno atual?
+            let isCompatible = (t) => t === targetTurno || t === "AM / PM";
+            let compA = isCompatible(a.turno) ? 0 : 1;
+            let compB = isCompatible(b.turno) ? 0 : 1;
+            if (compA !== compB) return compA - compB;
+           
+            // 2º Filtro: PRIORIDADE ABSOLUTA - ENVELOPADO
+            let envA = a.envelopado ? 0 : 1;
+            let envB = b.envelopado ? 0 : 1;
+            if (envA !== envB) return envA - envB;
+
+            // 3º Filtro: PRIORIDADE DE TURNO ESPECÍFICO
             let getTurnoScore = (t) => {
                 if (t === targetTurno) return 0;
-                if (t === "AM / PM") return 1;
+                if (t === "AM / PM") return 1;  
                 return 2;
             };
-            let scoreA = getTurnoScore(a.turno);
-            let scoreB = getTurnoScore(b.turno);
-            if (scoreA !== scoreB) return scoreA - scoreB;
+            let tScoreA = getTurnoScore(a.turno);
+            let tScoreB = getTurnoScore(b.turno);
+            if (tScoreA !== tScoreB) return tScoreA - tScoreB;
 
-            // Prioridade 2: Rodízio (Inverter o turno trabalhado ontem)
-            let rodizioScore = (nome) => {
-                let last = window.lastWorkedShift[nome.toUpperCase()];
-                if (!last) return 0; 
-                if (targetTurno === 'AM' && last === 'PM') return -1; 
-                if (targetTurno === 'PM' && last === 'AM') return -1; 
-                if (last === targetTurno) return 1; 
-                return 0;
-            };
-            let rA = rodizioScore(a.nome);
-            let rB = rodizioScore(b.nome);
-            if (rA !== rB) return rA - rB;
-
-            // Prioridade 3: Menos dias trabalhados
+            // 4º Filtro: DIAS NO MÊS (Rodízio)
             let diasA = window.currentMonthDriverCounts[a.nome.toUpperCase()] || 0;
             let diasB = window.currentMonthDriverCounts[b.nome.toUpperCase()] || 0;
-            if (diasA !== diasB) return diasA - diasB;
-
-            // Prioridade 4: Cluster Preferencial (Uberaba > Região)
-            let cA = getClusterScore(a.cluster);
-            let cB = getClusterScore(b.cluster);
-            return cA - cB;
+           
+            return diasA - diasB;
         });
+        // =======================================================
 
         const checkDeepMatch = (mClust, rClust) => {
             let mTok = getTokens(mClust); let rTok = getTokens(rClust);
@@ -957,14 +1225,14 @@
                 for(let m of frota) {
                     if(!m.disp) continue;
                     if(m.isAll !== forceAll) continue;
-                    
+                   
                     let match = false; let type = "";
-                    if(forceAll) { match = true; type = "Curinga"; } 
+                    if(forceAll) { match = true; type = "Curinga"; }
                     else {
                         let cMatch = checkDeepMatch(m.cluster, r.cluster);
                         if(cMatch) { match = true; type = "Fixo"; }
                     }
-                    
+                   
                     if(match) {
                         store.allocated.push({ rota: r.id, at: r.at, nome: m.nome, id: m.id, veic: m.veic, letra: r.letra, rodou: m.rodou, cluster: r.cluster, litragem: r.litragem, matchType: type, rejected: false, turno: m.turno });
                         m.disp = false; r.st = 'ok'; break;
@@ -1002,16 +1270,31 @@
         let h1 = "";
         store.allocated.forEach((r,i) => {
             let isSunday = (hoje.getDay() <= 3 && window.currentSundayDrivers && window.currentSundayDrivers.has(r.nome.toUpperCase()));
-            let neonClass = isSunday ? "neon-sunday" : "";
-            let cls = r.nome === "" ? "edit-input input-manual" : `edit-input ${neonClass}`;
-            
+            let isEnv = window.envelopadosSet && window.envelopadosSet.has(r.nome.toUpperCase());
+           
+            // Nova representação Visual: Borda Laranja para Input
+            let neonClass = "";
+            let envClass = "";
+            let tip = "";
+           
+            if (isSunday) {
+                neonClass = "neon-sunday";
+                tip = "Rodou Domingo";
+            }
+            if (isEnv) {
+                envClass = "input-envelopado"; // Apenas Borda Laranja
+                tip = tip ? tip + " | Veículo Envelopado (Prioridade)" : "Veículo Envelopado (Prioridade)";
+            }
+           
+            let cls = r.nome === "" ? `edit-input input-manual ${envClass}` : `edit-input ${neonClass} ${envClass}`;
+           
             let isDup = (nameCount[r.nome] > 1) || (idCount[r.id] > 1);
             let rowClass = isDup ? "row-dup" : "";
             let mTag = "";
             if(r.matchType === "Fixo") mTag = `<span class="tag-fixo">🎯 Fixo</span>`;
             else if(r.matchType === "Curinga") mTag = `<span class="tag-curinga">🃏 Curinga</span>`;
             else mTag = `<span style="color:#64748b; font-size:10px;">Manual</span>`;
-            
+           
             let daysInMonthCount = window.currentMonthDriverCounts[r.nome.toUpperCase()] || 0;
 
             let turnoBadge = "";
@@ -1023,7 +1306,6 @@
                 turnoBadge = `<span style="background:linear-gradient(135deg, #10b981 50%, #f59e0b 50%); border: 1px solid rgba(255,255,255,0.2); color:#fff; font-size:9px; padding:2px 4px; border-radius:4px; font-weight:bold; margin-left:5px;" title="Disponível nos dois turnos">AM/PM</span>`;
             }
 
-            // A bolinha neon visual do histórico
             let lastShift = r.nome ? window.lastWorkedShift[r.nome.toUpperCase()] : "";
             let dotHtml = getShiftDot(lastShift);
 
@@ -1033,7 +1315,7 @@
                 <td style="text-align:center; font-weight:900; color:#a5f3fc; font-size:13px;">${daysInMonthCount}</td>
                 <td>${r.rota}</td><td>${r.at}</td>
                 <td style="color:#a5f3fc; text-align:center;">${r.litragem || '-'}</td>
-                <td style="position:relative;">
+                <td style="position:relative;" title="${tip}">
                     <div style="display:flex; align-items:center; gap:6px;">
                         ${dotHtml}
                         <input class="${cls}" value="${r.nome}" onclick="onInputName(${i}, this)" oninput="onInputName(${i}, this)" onchange="onNameChange(${i}, this.value)" placeholder="Digite nome..." autocomplete="off" style="flex:1;">
@@ -1057,43 +1339,50 @@
         store.drivers.sort((a,b) => {
             let cA = window.currentMonthDriverCounts[a.nome.toUpperCase()] || 0;
             let cB = window.currentMonthDriverCounts[b.nome.toUpperCase()] || 0;
-            return cA - cB; 
+            return cA - cB;
         });
 
-        let h3 = ""; store.drivers.forEach(m => { 
+        let h3 = ""; store.drivers.forEach(m => {
             let upperName = m.nome.toUpperCase();
             let c = window.currentMonthDriverCounts[upperName] || 0;
-            
+           
             let isSunday = (hoje.getDay() <= 3 && window.currentSundayDrivers && window.currentSundayDrivers.has(upperName));
             let isMatch = (window.activeSwapCluster && checkDeepMatch(m.cluster, window.activeSwapCluster));
-            
+            let isEnv = window.envelopadosSet && window.envelopadosSet.has(upperName);
+           
             let neonClass = "";
+            let envClass = "";
+           
             if(isSunday && isMatch) neonClass = "neon-both";
             else if(isSunday) neonClass = "neon-sunday";
             else if(isMatch) neonClass = "neon-match";
-            
+
+            // Se for envelopado, aplica a classe da borda laranja
+            if (isEnv) {
+                envClass = "box-envelopado";
+            }
+           
             let badgeTurno = "";
             if (m.turno === "AM") badgeTurno = `<span style="background:#10b981; color:#fff; font-size:9px; padding:2px 4px; border-radius:4px; font-weight:bold;">AM</span>`;
             else if (m.turno === "PM") badgeTurno = `<span style="background:#f59e0b; color:#fff; font-size:9px; padding:2px 4px; border-radius:4px; font-weight:bold;">PM</span>`;
             else if (m.turno === "AM / PM") badgeTurno = `<span style="background:linear-gradient(135deg, #10b981 50%, #f59e0b 50%); border: 1px solid rgba(255,255,255,0.2); color:#fff; font-size:9px; padding:2px 4px; border-radius:4px; font-weight:bold;">AM/PM</span>`;
 
-            // Neon do último turno
             let lastShift = window.lastWorkedShift[upperName];
             let dotHtml = getShiftDot(lastShift);
 
-            h3 += `<tr>
+            h3 += `<tr title="${isEnv ? 'Veículo Envelopado (Prioridade)' : ''}">
                 <td style="display:flex; align-items:center; gap:6px;">
                     ${dotHtml}
-                    <span class="${neonClass}">${m.nome}</span>
+                    <span class="${neonClass} ${envClass}">${m.nome}</span>
                 </td>
                 <td>${m.id}</td>
                 <td style="text-align:center;">${badgeTurno}</td>
                 <td>${m.veic}</td>
                 <td>${m.cluster}</td>
                 <td style="text-align:center; font-weight:900; color:#a5f3fc;">${c}</td>
-            </tr>`; 
+            </tr>`;
         });
-        
+       
         let el = document.getElementById('b-mot');
         if(el) el.innerHTML = h3;
     }
@@ -1104,16 +1393,16 @@
         let cleanName = val.trim().toUpperCase(); let oldName = store.allocated[idx].nome;
         if(oldName && oldName.toUpperCase() !== cleanName) recycleDriver(oldName);
         store.allocated[idx].nome = val;
-        
+       
         if(cleanName === "") {
             store.allocated[idx].id = ""; store.allocated[idx].rejected = false; store.allocated[idx].turno = "";
         } else {
-            if(driverMap[cleanName]) { 
-                store.allocated[idx].id = driverMap[cleanName]; 
+            if(driverMap[cleanName]) {
+                store.allocated[idx].id = driverMap[cleanName];
                 let orig = window.driverOriginalData[cleanName] || { turno: "" };
                 store.allocated[idx].turno = orig.turno;
-                consumeFreeDriver(cleanName); 
-            } 
+                consumeFreeDriver(cleanName);
+            }
             else { store.allocated[idx].id = ""; store.allocated[idx].turno = ""; }
         }
         renderScreen();
@@ -1121,7 +1410,7 @@
 
     window.onInputName = function(idx, inp) {
         let val = inp.value; closeAllLists();
-        
+       
         window.activeSwapCluster = store.allocated[idx].cluster;
         renderLivresTable();
 
@@ -1129,11 +1418,11 @@
 
         let matches = [];
         if(!val) matches = allDriversList; else matches = allDriversList.filter(d => d.toUpperCase().includes(val.toUpperCase()));
-        
+       
         matches.sort((a,b) => {
             let isFreeA = checkFree(a) ? 1 : 0;
             let isFreeB = checkFree(b) ? 1 : 0;
-            if(isFreeA !== isFreeB) return isFreeB - isFreeA; 
+            if(isFreeA !== isFreeB) return isFreeB - isFreeA;
 
             let countA = window.currentMonthDriverCounts[a.toUpperCase()] || 0;
             let countB = window.currentMonthDriverCounts[b.toUpperCase()] || 0;
@@ -1147,14 +1436,21 @@
             let orig = window.driverOriginalData[upperName] || {cluster: "", turno: ""};
 
             let b = document.createElement("DIV"); b.className = isFree ? "popup-item status-free" : "popup-item status-busy";
-            
+           
             let isSunday = (hoje.getDay() <= 3 && window.currentSundayDrivers && window.currentSundayDrivers.has(upperName));
             let isMatch = (window.activeSwapCluster && checkDeepMatch(orig.cluster, window.activeSwapCluster));
-            
+            let isEnv = window.envelopadosSet && window.envelopadosSet.has(upperName);
+           
             let neonClass = "";
+            let envClass = "";
+           
             if(isSunday && isMatch) neonClass = "neon-both";
             else if(isSunday) neonClass = "neon-sunday";
             else if(isMatch) neonClass = "neon-match";
+           
+            if (isEnv) {
+                envClass = "box-envelopado";
+            }
 
             let daysInMonthCount = window.currentMonthDriverCounts[upperName] || 0;
 
@@ -1163,59 +1459,58 @@
             else if (orig.turno === "PM") badgeTurno = `<span style="color:#f59e0b;">[PM]</span>`;
             else if (orig.turno === "AM / PM") badgeTurno = `<span style="color:#60a5fa;">[AM/PM]</span>`;
 
-            // Neon do último turno
             let lastShift = window.lastWorkedShift[upperName];
             let dotHtml = getShiftDot(lastShift);
 
-            b.innerHTML = `<span style="display:flex; align-items:center; gap:6px;">${dotHtml}<span class="${neonClass}">${sName}</span> <span style="color:#94a3b8; font-size:9px; font-weight:bold; margin-left:5px;">(${daysInMonthCount} d) ${badgeTurno}</span></span>` + (isFree ? " <span class='badge-free'>LIVRE</span>" : "");
-            
+            b.innerHTML = `<span style="display:flex; align-items:center; gap:6px;">${dotHtml}<span class="${neonClass} ${envClass}">${sName}</span> <span style="color:#94a3b8; font-size:9px; font-weight:bold; margin-left:5px;">(${daysInMonthCount} d) ${badgeTurno}</span></span>` + (isFree ? " <span class='badge-free'>LIVRE</span>" : "");
+           
             b.addEventListener("mousedown", function(e) {
                 e.preventDefault();
                 let oldName = store.allocated[idx].nome;
                 if(oldName) recycleDriver(oldName);
-                inp.value = sName; store.allocated[idx].nome = sName; store.allocated[idx].rejected = false; 
+                inp.value = sName; store.allocated[idx].nome = sName; store.allocated[idx].rejected = false;
                 let k = sName.trim().toUpperCase();
                 if(driverMap[k]) {
                     store.allocated[idx].id = driverMap[k];
                     let oData = window.driverOriginalData[k] || { turno: "" };
                     store.allocated[idx].turno = oData.turno;
                 }
-                consumeFreeDriver(k); 
-                window.activeSwapCluster = ""; 
-                renderScreen(); 
+                consumeFreeDriver(k);
+                window.activeSwapCluster = "";
+                renderScreen();
                 closeAllLists();
             });
             a.appendChild(b);
-            count++; 
-            if(count > 30) break; 
+            count++;
+            if(count > 30) break;
         }
     }
 
     function recycleDriver(name) {
-        if(!name || name.length < 2) return; 
+        if(!name || name.length < 2) return;
         let key = name.toUpperCase();
-        
+       
         let countInAllocated = store.allocated.filter(r => r.nome && r.nome.toUpperCase() === key).length;
         if(countInAllocated > 1) return;
 
-        if(driverMap[key]) { 
+        if(driverMap[key]) {
             if(!store.drivers.some(d => d.nome.toUpperCase() === key)) {
                 let orig = window.driverOriginalData[key] || { veic: "Reciclado", cluster: "Reciclado", turno: "" };
-                store.drivers.push({ nome: name, id: driverMap[key], veic: orig.veic, cluster: orig.cluster, turno: orig.turno }); 
+                store.drivers.push({ nome: name, id: driverMap[key], veic: orig.veic, cluster: orig.cluster, turno: orig.turno });
             }
         }
     }
-    
+   
     function consumeFreeDriver(nameKey) { let freeIdx = store.drivers.findIndex(d => d.nome.toUpperCase() === nameKey); if(freeIdx > -1) store.drivers.splice(freeIdx, 1); }
-    
-    function closeAllLists() { 
-        let x = document.getElementsByClassName("custom-popup"); 
-        for (let i = 0; i < x.length; i++) x[i].parentNode.removeChild(x[i]); 
+   
+    function closeAllLists() {
+        let x = document.getElementsByClassName("custom-popup");
+        for (let i = 0; i < x.length; i++) x[i].parentNode.removeChild(x[i]);
     }
-    
-    document.addEventListener("mousedown", function(e) { 
+   
+    document.addEventListener("mousedown", function(e) {
         if(!e.target.classList.contains('edit-input') && !e.target.closest('.custom-popup')) {
-            closeAllLists(); 
+            closeAllLists();
             window.activeSwapCluster = "";
             renderLivresTable();
         }
@@ -1236,7 +1531,7 @@
         document.getElementById('t2').classList.add('hidden');
         document.getElementById('t3').classList.add('hidden');
         document.getElementById(id).classList.remove('hidden');
-        
+       
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         document.getElementById('pull-area').style.display = (id === 't1') ? 'flex' : 'none';
@@ -1266,15 +1561,15 @@
         let file = e.target.files[0];
         if(!file) return;
 
-        let inputDate = document.getElementById('patio-date').value; 
-        let shift = document.getElementById('patio-shift').value; 
-        
+        let inputDate = document.getElementById('patio-date').value;
+        let shift = document.getElementById('patio-shift').value;
+       
         if(!inputDate) return alert("Selecione a data primeiro!");
-        
+       
         let yyyy = inputDate.split('-')[0];
         let mm = inputDate.split('-')[1];
         let dd = inputDate.split('-')[2];
-        let dateCode = `${yyyy}${mm}${dd}`; 
+        let dateCode = `${yyyy}${mm}${dd}`;
 
         let btn = document.getElementById('btn-import-historico');
         let originalHtml = btn.innerHTML;
@@ -1283,33 +1578,33 @@
         const r = new FileReader();
         r.onload = async function(evt) {
             const wb = XLSX.read(evt.target.result, {type: 'array'});
-            await new Promise(res => setTimeout(res, 10)); 
-            
+            await new Promise(res => setTimeout(res, 10));
+           
             const sheetName = wb.SheetNames.find(n => n.toUpperCase().includes('PATIO') || n.toUpperCase().includes('PÁTIO'));
-            
+           
             if(!sheetName) {
                 btn.innerHTML = originalHtml;
                 return alert("ERRO: Não foi encontrada a aba escrita 'Pátio' neste arquivo. Verifique a planilha.");
             }
-            
+           
             const ws = wb.Sheets[sheetName];
-            const data = XLSX.utils.sheet_to_json(ws, {header: "A", defval: "", range: 1}); 
+            const data = XLSX.utils.sheet_to_json(ws, {header: "A", defval: "", range: 1});
 
             let patioDataToSave = {};
             let count = 0;
 
             data.forEach(row => {
                 let nomeRaw = String(row['A'] || "").trim();
-                let nome = nomeRaw.toUpperCase(); 
+                let nome = nomeRaw.toUpperCase();
                 let id = String(row['B'] || "").trim();                  
-                let veic = String(row['D'] || "").trim().toUpperCase(); 
-                let clusterPatio = String(row['E'] || "").trim().toUpperCase(); 
-                
+                let veic = String(row['D'] || "").trim().toUpperCase();
+                let clusterPatio = String(row['E'] || "").trim().toUpperCase();
+               
                 if(nome.length > 2 && !nome.includes("NOME") && !nome.includes("MOTORISTA")) {
-                    patioDataToSave[nome] = { 
-                        id: id, 
+                    patioDataToSave[nome] = {
+                        id: id,
                         veiculo: veic,
-                        cluster_real: (clusterPatio && clusterPatio !== "CLUSTER" && clusterPatio !== "UNDEFINED" && clusterPatio !== "ROTA") ? clusterPatio : "" 
+                        cluster_real: (clusterPatio && clusterPatio !== "CLUSTER" && clusterPatio !== "UNDEFINED" && clusterPatio !== "ROTA") ? clusterPatio : ""
                     };
                     count++;
                 }
@@ -1335,12 +1630,12 @@
                         count: 0,
                         cluster_real: ""
                     };
-                    
+                   
                     if (shift === 'AM') driverObj.AM = true;
                     if (shift === 'PM') driverObj.PM = true;
-                    
+                   
                     driverObj.veiculo = patioDataToSave[nome].veiculo;
-                    
+                   
                     if(patioDataToSave[nome].cluster_real) {
                         driverObj.cluster_real = patioDataToSave[nome].cluster_real;
                     }
@@ -1352,7 +1647,7 @@
 
                 btn.innerHTML = originalHtml;
                 alert(`Concluído! ${count} motoristas registrados no turno ${shift}.`);
-                
+               
                 let activeMonth = document.getElementById('month-picker').value;
                 if(activeMonth === `${yyyy}-${mm}`) {
                     loadSpecificMonth(activeMonth);
@@ -1377,7 +1672,7 @@
 
         let formattedDisplay = `${dd}/${mm}/${yyyy}`;
         let confirmation = confirm(`⚠️ ATENÇÃO:\nVocê tem certeza que deseja APAGAR COMPLETAMENTE todos os registros (AM e PM) do dia ${formattedDisplay}?\n\nEsta ação não poderá ser desfeita.`);
-        
+       
         if(!confirmation) return;
 
         let btn = document.getElementById('btn-delete-day');
@@ -1386,9 +1681,9 @@
 
         try {
             await database.ref(`${DB_NODE}/${dateCode}`).remove();
-            
+           
             alert(`Sucesso! Todos os dados do dia ${formattedDisplay} foram limpos do histórico.`);
-            
+           
             let activeMonth = document.getElementById('month-picker').value;
             if(activeMonth === `${yyyy}-${mm}`) {
                 loadSpecificMonth(activeMonth);
@@ -1406,9 +1701,9 @@
         if (!baseDateCode) return;
         let refYear = parseInt(baseDateCode.substring(0,4));
         let refMonth = parseInt(baseDateCode.substring(4,6)) - 1;
-        let daysInMonth = new Date(refYear, refMonth + 1, 0).getDate(); 
+        let daysInMonth = new Date(refYear, refMonth + 1, 0).getDate();
         let monthDates = []; let weekNames = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
-        
+       
         let theadHtml = `<tr><th>Nome Motorista</th><th>ID</th><th style="text-align:center;">Veículo</th>`;
         for(let i=1; i<=daysInMonth; i++) {
             let d = new Date(refYear, refMonth, i);
@@ -1428,11 +1723,11 @@
             let startCode = monthDates[0];
             let endCode = monthDates[monthDates.length - 1];
             let snap = await database.ref(DB_NODE).orderByKey().startAt(startCode).endAt(endCode).once('value');
-            
+           
             if (snap.exists()) {
                 historyFromFirebase = snap.val();
             }
-        } catch (error) { 
+        } catch (error) {
             console.error("Erro detalhado do Firebase:", error);
             return document.getElementById('b-historico').innerHTML = `
                 <tr>
@@ -1449,28 +1744,28 @@
             let dayData = historyFromFirebase[dCode] || {};
             Object.keys(dayData).forEach(nome => {
                 if (!monthData[nome]) monthData[nome] = { id: dayData[nome].id, veiculo: dayData[nome].veiculo || '-', days: {}, total: 0 };
-                
+               
                 if(dayData[nome].veiculo && dayData[nome].veiculo !== '-') monthData[nome].veiculo = dayData[nome].veiculo;
-                
+               
                 monthData[nome].days[dCode] = dayData[nome];
-                
+               
                 let rotasDiarias = 0;
                 if(dayData[nome].AM) rotasDiarias++;
                 if(dayData[nome].PM) rotasDiarias++;
-                if(!dayData[nome].AM && !dayData[nome].PM && dayData[nome].count > 0) rotasDiarias += dayData[nome].count; 
-                
+                if(!dayData[nome].AM && !dayData[nome].PM && dayData[nome].count > 0) rotasDiarias += dayData[nome].count;
+               
                 monthData[nome].total += rotasDiarias;
             });
         });
 
-        let sortedDrivers = Object.keys(monthData).map(nome => ({ 
-            nome, 
-            id: monthData[nome].id, 
+        let sortedDrivers = Object.keys(monthData).map(nome => ({
+            nome,
+            id: monthData[nome].id,
             veiculo: monthData[nome].veiculo,
-            days: monthData[nome].days, 
-            total: monthData[nome].total 
+            days: monthData[nome].days,
+            total: monthData[nome].total
         })).sort((a, b) => b.total - a.total);
-        
+       
         window.currentMonthDates = monthDates; window.currentMonthData = sortedDrivers;
 
         let tbodyHtml = "";
@@ -1479,7 +1774,7 @@
                 <td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px;" title="${d.nome}">${d.nome}</td>
                 <td>${d.id}</td>
                 <td>${d.veiculo}</td>`;
-                
+               
             monthDates.forEach(dCode => {
                 let dayObj = d.days[dCode];
                 if (!dayObj) {
@@ -1489,21 +1784,21 @@
                     } else {
                     let text = "1";
                     let countDia = 0;
-                    let cssClass = "hist-cell-ok"; 
+                    let cssClass = "hist-cell-ok";
 
                     if(dayObj.AM) countDia++;
                     if(dayObj.PM) countDia++;
                     if(!dayObj.AM && !dayObj.PM && dayObj.count > 0) {
                         countDia += dayObj.count;
-                        cssClass = "hist-cell-am"; 
+                        cssClass = "hist-cell-am";
                     }
 
                     if(dayObj.AM && !dayObj.PM) cssClass = "hist-cell-am";
                     else if(!dayObj.AM && dayObj.PM) cssClass = "hist-cell-pm";
                     else if(dayObj.AM && dayObj.PM) cssClass = "hist-cell-ampm";
-                    
+                   
                     if(countDia > 0) text = countDia.toString();
-                    
+                   
                     tbodyHtml += `<td style="text-align:center;" title="${dayObj.cluster_real ? 'Cluster: '+dayObj.cluster_real : ''}"><div class="hist-cell-val ${cssClass}">${text}</div></td>`;
                 }
             });
@@ -1531,11 +1826,11 @@
     };
     window.filterHistoryDebounced = debounce(window.filterHistory, 300);
 
-    window.loadSpecificMonth = function(monthVal) { 
-        if(!monthVal) return; 
-        let parts = monthVal.split('-'); 
-        let dateCode = `${parts[0]}${parts[1]}01`; 
-        loadAndRenderHistory(dateCode); 
+    window.loadSpecificMonth = function(monthVal) {
+        if(!monthVal) return;
+        let parts = monthVal.split('-');
+        let dateCode = `${parts[0]}${parts[1]}01`;
+        loadAndRenderHistory(dateCode);
     };
 
     let chartS, chartM, chartT;
@@ -1566,7 +1861,7 @@
             'MOTO': [0,0,0,0,0],
             'VUC': [0,0,0,0,0]
         };
-        
+       
         let totalVeicCounts = { 'FIORINO': 0, 'VAN': 0, 'PASSEIO': 0, 'MOTO': 0, 'VUC': 0 };
 
         for (let i = 1; i <= daysInMonth; i++) {
@@ -1577,7 +1872,7 @@
             if (dayData) {
                 let weekIdx = Math.floor(index / 7);
                 if (weekIdx > 4) weekIdx = 4;
-                
+               
                 Object.values(dayData).forEach(driver => {
                     let rotasDoMotorista = 0;
                     if (driver.AM) rotasDoMotorista++;
@@ -1587,13 +1882,13 @@
                     if (rotasDoMotorista > 0 && driver.rejected !== true) {
                         let v = (driver.veiculo || "").toUpperCase();
                         let tipo = 'FIORINO';
-                        
+                       
                         if(v.includes('VAN')) tipo = 'VAN';
                         else if(v.includes('PASSEIO') || v.includes('CARRO')) tipo = 'PASSEIO';
                         else if(v.includes('MOTO')) tipo = 'MOTO';
                         else if(v.includes('VUC') || v.includes('HR') || v.includes('BAU') || v.includes('CAMINHAO')) tipo = 'VUC';
                         else if(v.includes('FIORINO') || v.includes('UTILITARIO')) tipo = 'FIORINO';
-                        
+                       
                         dailyVeicCounts[tipo][index] += rotasDoMotorista;
                         weeklyVeicCounts[tipo][weekIdx] += rotasDoMotorista;
                         totalVeicCounts[tipo] += rotasDoMotorista;
@@ -1614,62 +1909,62 @@
         if(chartT) chartT.destroy();
 
         const cores = {
-            'FIORINO': '#EE4D2D', 
-            'VAN': '#10b981', 
-            'PASSEIO': '#f59e0b', 
-            'MOTO': '#8b5cf6', 
+            'FIORINO': '#EE4D2D',
+            'VAN': '#10b981',
+            'PASSEIO': '#f59e0b',
+            'MOTO': '#8b5cf6',
             'VUC': '#3b82f6'
         };
 
         const ctxM = document.getElementById('chart-mensal').getContext('2d');
         chartM = new Chart(ctxM, {
             type: 'line',
-            data: { 
-                labels: labelsM, 
+            data: {
+                labels: labelsM,
                 datasets: [
                     { label: 'Fiorino', data: daily['FIORINO'], borderColor: cores['FIORINO'], backgroundColor: 'transparent', tension: 0.4 },
                     { label: 'Vans', data: daily['VAN'], borderColor: cores['VAN'], backgroundColor: 'transparent', tension: 0.4 },
                     { label: 'Passeio', data: daily['PASSEIO'], borderColor: cores['PASSEIO'], backgroundColor: 'transparent', tension: 0.4 },
                     { label: 'Motos', data: daily['MOTO'], borderColor: cores['MOTO'], backgroundColor: 'transparent', tension: 0.4 },
                     { label: 'VUC', data: daily['VUC'], borderColor: cores['VUC'], backgroundColor: 'transparent', tension: 0.4 }
-                ] 
+                ]
             },
-            options: { 
-                responsive: true, 
-                plugins: { legend: { display: true, position: 'top', labels: { color: '#cbd5e1', font: { family: 'Montserrat' } } } }, 
-                scales: { 
-                    y: { beginAtZero: true, grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } }, 
-                    x: { grid: { display: false }, ticks: { color: '#94a3b8' } } 
-                } 
+            options: {
+                responsive: true,
+                plugins: { legend: { display: true, position: 'top', labels: { color: '#cbd5e1', font: { family: 'Montserrat' } } } },
+                scales: {
+                    y: { beginAtZero: true, grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } },
+                    x: { grid: { display: false }, ticks: { color: '#94a3b8' } }
+                }
             }
         });
 
         const ctxS = document.getElementById('chart-semanal').getContext('2d');
         chartS = new Chart(ctxS, {
             type: 'bar',
-            data: { 
-                labels: labelsW, 
+            data: {
+                labels: labelsW,
                 datasets: [
                     { label: 'Fiorino', data: weekly['FIORINO'], backgroundColor: cores['FIORINO'], borderRadius: 4 },
                     { label: 'Vans', data: weekly['VAN'], backgroundColor: cores['VAN'], borderRadius: 4 },
                     { label: 'Passeio', data: weekly['PASSEIO'], backgroundColor: cores['PASSEIO'], borderRadius: 4 },
                     { label: 'Motos', data: weekly['MOTO'], backgroundColor: cores['MOTO'], borderRadius: 4 },
                     { label: 'VUC', data: weekly['VUC'], backgroundColor: cores['VUC'], borderRadius: 4 }
-                ] 
+                ]
             },
-            options: { 
-                responsive: true, 
-                plugins: { 
+            options: {
+                responsive: true,
+                plugins: {
                     legend: { display: true, position: 'top', labels: { color: '#cbd5e1', font: { family: 'Montserrat' } } },
                     tooltip: { mode: 'index', intersect: false }
-                }, 
-                scales: { 
-                    y: { stacked: true, beginAtZero: true, grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } }, 
-                    x: { stacked: true, grid: { display: false }, ticks: { color: '#94a3b8' } } 
-                } 
+                },
+                scales: {
+                    y: { stacked: true, beginAtZero: true, grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } },
+                    x: { stacked: true, grid: { display: false }, ticks: { color: '#94a3b8' } }
+                }
             }
         });
-        
+       
         const ctxT = document.getElementById('chart-tipos').getContext('2d');
         chartT = new Chart(ctxT, {
             type: 'doughnut',
@@ -1720,7 +2015,7 @@
 
                 let d = dayData[nome];
                 let trabalhouHoje = false;
-                
+               
                 if(d.AM || d.PM || d.count > 0) trabalhouHoje = true;
                 if(d.rejected) trabalhouHoje = false;
 
@@ -1735,7 +2030,7 @@
 
         let html = "";
         let arr = Object.keys(calcData).map(k => ({nome: k, ...calcData[k]}));
-        
+       
         arr.sort((a,b) => b.diasTrabalhados - a.diasTrabalhados);
 
         arr.forEach(d => {
@@ -1744,12 +2039,12 @@
 
             let cCounts = {};
             d.clustersY.forEach(c => cCounts[c] = (cCounts[c] || 0) + 1);
-            
+           
             let allClusters = Object.keys(cCounts)
                 .map(k => ({name: k, count: cCounts[k]}))
                 .sort((a,b) => b.count - a.count);
 
-            let maxVisible = 5; 
+            let maxVisible = 5;
             let cText = "";
 
             if (allClusters.length === 0) {
@@ -1763,9 +2058,9 @@
                     let visibleTags = tagsHtml.slice(0, maxVisible - 1);
                     let hiddenData = allClusters.slice(maxVisible - 1);
                     let tooltipText = hiddenData.map(h => `${h.name} (${h.count}x)`).join('&#10;');
-                    
+                   
                     let moreTag = `<span title="Rotas Ocultas:&#10;${tooltipText}" style="background:rgba(59, 130, 246, 0.1); color:#60a5fa; padding:2px 5px; border-radius:4px; margin-right:3px; display:inline-block; border:1px solid rgba(59, 130, 246, 0.3); margin-bottom:3px; font-size:9px; font-weight:bold; cursor:help;"><i class="fa-solid fa-layer-group"></i> +${hiddenData.length} Rotas</span>`;
-                    
+                   
                     cText = visibleTags.join('') + moreTag;
                 }
             }
@@ -1782,7 +2077,7 @@
         if(arr.length === 0) {
             html = `<tr><td colspan="5" style="text-align:center; padding:30px;">Nenhum histórico registrado para este mês.</td></tr>`;
         }
-        
+       
         document.getElementById('b-analise').innerHTML = html;
     }
 
@@ -1803,6 +2098,358 @@
         }
     };
     window.filterAnaliseDebounced = debounce(window.filterAnalise, 300);
+</script>
+
+<script>
+    // =====================================================================
+    // ABA NOVA: ROTAÇÃO DE RODÍZIO + DOBRAS
+    // Somente leitura do nó shopee_history (mesmo do Histórico de Alocação).
+    // Não grava, não apaga e não altera nada no banco.
+    // =====================================================================
+    (function () {
+        const CATS = {
+            UTIL:    { nome: 'Fiorino / Van', icon: 'fa-van-shuttle', cor: '#EE4D2D' },
+            PASSEIO: { nome: 'Passeio',       icon: 'fa-car-side',    cor: '#f59e0b' },
+            MOTO:    { nome: 'Moto',          icon: 'fa-motorcycle',  cor: '#8b5cf6' }
+        };
+        const SEMANA = ['DOM','SEG','TER','QUA','QUI','SEX','SÁB'];
+        const SEMANA_LONGA = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+        const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
+        let R = null;            // dados do mês carregado
+        let catAtiva = 'UTIL';
+        let diaSel = null;
+        let carregando = 0;
+
+        const pad = n => String(n).padStart(2, '0');
+        const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+        // Mesma regra de classificação do Dashboard Pátio
+        function categoria(v) {
+            v = String(v || '').toUpperCase();
+            if (v.includes('VAN')) return 'UTIL';
+            if (v.includes('PASSEIO') || v.includes('CARRO')) return 'PASSEIO';
+            if (v.includes('MOTO')) return 'MOTO';
+            return 'UTIL';
+        }
+        function subtipo(v) {
+            v = String(v || '').toUpperCase();
+            if (v.includes('VAN')) return 'VAN';
+            if (v.includes('VUC') || v.includes('HR') || v.includes('BAU') || v.includes('CAMINHAO')) return 'VUC';
+            return 'FIORINO';
+        }
+
+        function resumo(lista) {
+            if (!lista.length) return null;
+            const total = lista.reduce((s, d) => s + d.dias, 0);
+            const media = total / lista.length;
+            const min = Math.min(...lista.map(d => d.dias));
+            const max = Math.max(...lista.map(d => d.dias));
+            const dp = Math.sqrt(lista.reduce((s, d) => s + (d.dias - media) ** 2, 0) / lista.length);
+            const eq = media > 0 ? Math.max(0, Math.round(100 - (dp / media) * 100)) : 0;
+            const nAb = lista.filter(d => d.dias < media * 0.8).length;
+            const nAc = lista.filter(d => d.dias > media * 1.2).length;
+            return { total, media, min, max, eq, nAb, nAc, nOk: lista.length - nAb - nAc };
+        }
+
+        // ----------------------------- CARREGAR -----------------------------
+        window.loadRodizio = async function (monthStr) {
+            const inp = document.getElementById('rod-month');
+            const agora = new Date();
+            if (!monthStr) monthStr = inp.value || `${agora.getFullYear()}-${pad(agora.getMonth() + 1)}`;
+            inp.value = monthStr;
+
+            const y = parseInt(monthStr.split('-')[0], 10);
+            const m = parseInt(monthStr.split('-')[1], 10);
+            const diasMes = new Date(y, m, 0).getDate();
+            const chaveAtual = agora.getFullYear() * 100 + agora.getMonth() + 1;
+            const chaveSel = y * 100 + m;
+            const ehMesAtual = chaveSel === chaveAtual;
+            const refDay = ehMesAtual ? agora.getDate() : (chaveSel < chaveAtual ? diasMes : 0);
+
+            const meuPedido = ++carregando;
+            document.getElementById('rod-fila-body').innerHTML =
+                `<tr><td colspan="9" style="text-align:center; padding:30px; color:var(--brand); font-weight:bold;"><i class="fa-solid fa-spinner fa-spin"></i> Lendo histórico do mês...</td></tr>`;
+
+            let hist = {};
+            try {
+                const snap = await database.ref(DB_NODE).orderByKey()
+                    .startAt(`${y}${pad(m)}01`).endAt(`${y}${pad(m)}${pad(diasMes)}`).once('value');
+                if (snap.exists()) hist = snap.val();
+            } catch (error) {
+                document.getElementById('rod-fila-body').innerHTML =
+                    `<tr><td colspan="9" style="text-align:center; padding:30px; color:#ef4444; font-weight:bold;">Erro de conexão com o banco de dados.<br><span style="color:#f59e0b; font-size:12px;">Motivo: ${esc(error.message)}</span></td></tr>`;
+                return;
+            }
+            if (meuPedido !== carregando) return; // trocou de mês no meio do carregamento
+
+            const motoristas = {};
+            const importados = {};
+
+            Object.keys(hist).sort().forEach(dCode => {
+                const dia = parseInt(dCode.substring(6, 8), 10);
+                if (!dia || dia > diasMes) return;
+                const dayData = hist[dCode] || {};
+                const imp = importados[dia] = { AM: false, PM: false, nAM: 0, nPM: 0 };
+
+                Object.keys(dayData).forEach(nome => {
+                    const d = dayData[nome] || {};
+                    if (d.AM) { imp.AM = true; imp.nAM++; }
+                    if (d.PM) { imp.PM = true; imp.nPM++; }
+
+                    if (!motoristas[nome]) motoristas[nome] = { nome, veic: '', dias: 0, am: 0, pm: 0, ultimo: 0, dobras: [] };
+                    const r = motoristas[nome];
+                    if (d.veiculo && String(d.veiculo).trim() && d.veiculo !== '-') r.veic = String(d.veiculo).trim().toUpperCase();
+
+                    if (d.rejected) return;
+                    if (!(d.AM || d.PM || d.count > 0)) return;
+                    r.dias++;
+                    if (d.AM) r.am++;
+                    if (d.PM) r.pm++;
+                    if (d.AM && d.PM) r.dobras.push(dia);
+                    if (dia > r.ultimo) r.ultimo = dia;
+                });
+            });
+
+            const dados = { UTIL: [], PASSEIO: [], MOTO: [] };
+            Object.values(motoristas).forEach(r => {
+                if (r.dias > 0) dados[categoria(r.veic)].push(r);
+            });
+
+            R = { y, m, diasMes, refDay, ehMesAtual, hoje: ehMesAtual ? agora.getDate() : 0, dados, importados };
+            diaSel = null;
+            render();
+        };
+
+        window.rodSelCat = function (k) { catAtiva = k; diaSel = null; render(); };
+        window.rodSelDia = function (k) { diaSel = (diaSel === k ? null : k); render(); };
+        window.rodRender = function () { if (R) render(); };
+
+        function render() {
+            renderCards();
+            renderFila();
+            renderDobras();
+        }
+
+        // ------------------------------ CARDS -------------------------------
+        function renderCards() {
+            document.getElementById('rod-cats').innerHTML = Object.keys(CATS).map(k => {
+                const c = CATS[k], lista = R.dados[k], s = resumo(lista);
+                const ativo = k === catAtiva ? 'active' : '';
+                const cab = (verd) => `<div class="rod-cat-head">
+                        <div class="rod-cat-icon"><i class="fa-solid ${c.icon}"></i></div>
+                        <div style="min-width:0;"><div class="rod-cat-name">${c.nome}</div><div class="rod-cat-sub">${lista.length} motoristas</div></div>
+                        ${verd}
+                    </div>`;
+
+                if (!s) {
+                    return `<div class="rod-cat ${ativo}" style="--cat:${c.cor}" onclick="rodSelCat('${k}')">
+                        ${cab('')}<div class="rod-empty-cat">Sem registros neste mês.</div></div>`;
+                }
+
+                let v;
+                if (s.eq >= 75) v = ['#10b981', 'rgba(16,185,129,0.12)', 'fa-circle-check', 'Mix bom', 'Mix bom — rodízio bem distribuído'];
+                else if (s.eq >= 55) v = ['#f59e0b', 'rgba(245,158,11,0.12)', 'fa-triangle-exclamation', 'Atenção', `Atenção — ${s.nAb} motorista(s) rodando bem abaixo da média`];
+                else v = ['#ef4444', 'rgba(239,68,68,0.12)', 'fa-circle-xmark', 'Desequilibrado', 'Desequilibrado — poucos concentrando as rotas'];
+
+                let subMedias = '';
+                if (k === 'UTIL') {
+                    const porTipo = {};
+                    lista.forEach(d => { (porTipo[subtipo(d.veic)] = porTipo[subtipo(d.veic)] || []).push(d.dias); });
+                    const tipos = ['FIORINO', 'VAN', 'VUC'].filter(t => porTipo[t]);
+                    if (tipos.length > 1) {
+                        subMedias = `<div class="rod-sub-media">${tipos.map(t => {
+                            const arr = porTipo[t];
+                            return `<span title="${arr.length} motorista(s)">${t} <b>${(arr.reduce((a, b) => a + b, 0) / arr.length).toFixed(1)}</b> dias</span>`;
+                        }).join('')}</div>`;
+                    }
+                }
+
+                const pct = n => (n / lista.length) * 100;
+                const RR = 22, C = 2 * Math.PI * RR;
+                return `<div class="rod-cat ${ativo}" style="--cat:${c.cor}" onclick="rodSelCat('${k}')">
+                    ${cab(`<span class="rod-verdict" style="color:${v[0]}; background:${v[1]}; border-color:${v[0]}55;" title="${v[4]}"><i class="fa-solid ${v[2]}"></i> ${v[3]}</span>`)}
+                    <div class="rod-cat-body">
+                        <div class="rod-ring" title="Equilíbrio do rodízio: 100% = todos rodaram a mesma quantidade de dias">
+                            <svg width="52" height="52"><circle cx="26" cy="26" r="${RR}" fill="none" stroke="#1e293b" stroke-width="5"/>
+                            <circle cx="26" cy="26" r="${RR}" fill="none" stroke="${v[0]}" stroke-width="5" stroke-linecap="round"
+                                stroke-dasharray="${C}" stroke-dashoffset="${C * (1 - s.eq / 100)}"/></svg>
+                            <div class="rod-ring-val"><b style="color:${v[0]}">${s.eq}%</b><span>Equil.</span></div>
+                        </div>
+                        <div class="rod-metrics">
+                            <div class="rod-metric"><b style="color:#a5f3fc">${s.media.toFixed(1)}</b><span>Média dias</span></div>
+                            <div class="rod-metric"><b>${s.min}–${s.max}</b><span>Faixa</span></div>
+                            <div class="rod-metric"><b style="color:#f59e0b">${s.max - s.min}</b><span>Diferença</span></div>
+                        </div>
+                    </div>
+                    <div class="rod-dist">
+                        ${s.nAb ? `<div style="width:${pct(s.nAb)}%; background:#3b82f6;" title="${s.nAb} abaixo da média"></div>` : ''}
+                        ${s.nOk ? `<div style="width:${pct(s.nOk)}%; background:#10b981;" title="${s.nOk} equilibrados"></div>` : ''}
+                        ${s.nAc ? `<div style="width:${pct(s.nAc)}%; background:#ef4444;" title="${s.nAc} acima da média"></div>` : ''}
+                    </div>
+                    <div class="rod-dist-lbl"><span style="color:#60a5fa">${s.nAb} abaixo</span><span style="color:#34d399">${s.nOk} equilibr.</span><span style="color:#f87171">${s.nAc} acima</span></div>
+                    ${subMedias}
+                </div>`;
+            }).join('');
+        }
+
+        // ------------------------------- FILA -------------------------------
+        function renderFila() {
+            const lista = R.dados[catAtiva];
+            const tbody = document.getElementById('rod-fila-body');
+            if (!lista.length) {
+                tbody.innerHTML = `<tr><td colspan="9" style="text-align:center; padding:30px; color:#64748b;">Nenhum motorista de ${CATS[catAtiva].nome} registrado neste mês.</td></tr>`;
+                return;
+            }
+            const s = resumo(lista);
+            const escala = (s.max * 1.1) || 1;
+            const busca = (document.getElementById('rod-busca').value || '').toUpperCase().trim();
+            const fila = [...lista].sort((a, b) => a.dias - b.dias || a.ultimo - b.ultimo);
+            const hoje0 = new Date(); hoje0.setHours(0, 0, 0, 0);
+
+            let html = '';
+            fila.forEach((d, idx) => {
+                if (busca && !d.nome.toUpperCase().includes(busca)) return;
+                const ratio = s.media > 0 ? d.dias / s.media : 1;
+                const st = ratio < 0.8 ? ['rod-b-low', 'Abaixo', '#3b82f6'] : ratio > 1.2 ? ['rod-b-high', 'Acima', '#ef4444'] : ['rod-b-ok', 'Equilibrado', '#10b981'];
+
+                let ultimaTxt = '-';
+                if (d.ultimo) {
+                    const atras = Math.round((hoje0 - new Date(R.y, R.m - 1, d.ultimo)) / 86400000);
+                    const rel = atras <= 0 ? 'hoje' : atras === 1 ? 'ontem' : `há ${atras} dias`;
+                    ultimaTxt = `${pad(d.ultimo)}/${pad(R.m)} <span style="color:${atras >= 5 ? '#fbbf24' : '#64748b'}; font-size:11px;">(${rel})</span>`;
+                }
+                const dobrasTxt = d.dobras.length
+                    ? `<span class="rod-pill" title="Dias: ${d.dobras.map(x => pad(x) + '/' + pad(R.m)).join(', ')}">${d.dobras.length}</span>`
+                    : '<span class="rod-zero">-</span>';
+
+                html += `<tr>
+                    <td style="text-align:center;"><span class="rod-pos ${idx < 3 ? 'next' : ''}">${idx + 1}</span></td>
+                    <td style="font-weight:600;">${esc(d.nome)}</td>
+                    <td>${esc(d.veic || '-')}</td>
+                    <td style="text-align:center; font-weight:900; font-size:14px; color:#a5f3fc;">${d.dias}</td>
+                    <td><span class="rod-shift rod-s-am">AM ${d.am}</span><span class="rod-shift rod-s-pm">PM ${d.pm}</span></td>
+                    <td style="text-align:center;">${dobrasTxt}</td>
+                    <td>${ultimaTxt}</td>
+                    <td><div class="rod-bar"><div class="rod-bar-fill" style="width:${(d.dias / escala) * 100}%; background:${st[2]};"></div><div class="rod-bar-avg" style="left:${(s.media / escala) * 100}%"></div></div></td>
+                    <td style="text-align:center;"><span class="rod-badge ${st[0]}">${st[1]}</span></td>
+                </tr>`;
+            });
+            tbody.innerHTML = html || `<tr><td colspan="9" style="text-align:center; padding:30px; color:#64748b;">Nenhum motorista encontrado.</td></tr>`;
+        }
+
+        // ------------------------------ DOBRAS ------------------------------
+        function statusDia(k) {
+            const imp = R.importados[k];
+            if (!imp || (!imp.AM && !imp.PM)) return 'none';
+            if (!imp.AM || !imp.PM) return 'inc';
+            return 'ok';
+        }
+
+        function renderDobras() {
+            const lista = R.dados[catAtiva];
+            const { diasMes, m, y } = R;
+            const porDia = new Array(diasMes).fill(0);
+            lista.forEach(d => d.dobras.forEach(dd => porDia[dd - 1]++));
+            const total = porDia.reduce((a, b) => a + b, 0);
+            const quem = lista.filter(d => d.dobras.length > 0);
+            const diasCom = porDia.filter(v => v > 0).length;
+            const pico = Math.max(0, ...porDia);
+            const diaPico = porDia.indexOf(pico) + 1;
+
+            document.getElementById('rod-dobra-sub').textContent =
+                `Motoristas de ${CATS[catAtiva].nome} marcados como AM e PM no mesmo dia no Histórico de Alocação.`;
+
+            document.getElementById('rod-dobra-stats').innerHTML = `
+                <div class="rod-stat"><div class="rod-stat-val" style="color:var(--brand)">${total}</div><div class="rod-stat-lbl">Dobras no mês</div></div>
+                <div class="rod-stat"><div class="rod-stat-val" style="color:#a5f3fc">${quem.length}</div><div class="rod-stat-lbl">Motoristas que dobraram</div></div>
+                <div class="rod-stat"><div class="rod-stat-val" style="color:#3b82f6">${diasCom}</div><div class="rod-stat-lbl">Dias com dobra</div></div>
+                <div class="rod-stat"><div class="rod-stat-val" style="color:#f59e0b">${pico || '-'}</div><div class="rod-stat-lbl">${pico ? `Pico (dia ${pad(diaPico)}/${pad(m)})` : 'Pico'}</div></div>`;
+
+            // ===== MATRIZ =====
+            const selCls = k => k === diaSel ? ' rod-col-sel' : '';
+            let th = '<tr><th>Nome Motorista</th><th>Veículo</th><th title="Quantos dias o motorista rodou no mês">Dias no Mês</th>';
+            for (let k = 1; k <= diasMes; k++) {
+                const wd = new Date(y, m - 1, k).getDay();
+                const hojeStyle = k === R.hoje ? 'color:#fff; border-bottom:3px solid var(--brand);' : '';
+                th += `<th class="${wd === 0 ? 'rod-sun' : ''}${selCls(k)}" style="min-width:30px; ${hojeStyle}">${SEMANA[wd]}<br><span style="font-size:8px; color:#94a3b8;">${pad(k)}/${pad(m)}</span></th>`;
+            }
+            th += '<th>Dobras</th></tr>';
+            document.getElementById('rod-matriz-head').innerHTML = th;
+
+            const ordem = [...quem].sort((a, b) => b.dobras.length - a.dobras.length || b.dias - a.dias);
+            document.getElementById('rod-matriz-body').innerHTML = ordem.length ? ordem.map(d => {
+                let row = `<tr><td title="${esc(d.nome)}">${esc(d.nome)}</td><td>${esc(d.veic || '-')}</td><td class="rod-col-dias">${d.dias}</td>`;
+                for (let k = 1; k <= diasMes; k++) {
+                    row += d.dobras.includes(k)
+                        ? `<td class="${selCls(k)}"><span class="rod-pill" title="${esc(d.nome)} — AM + PM em ${pad(k)}/${pad(m)}">2</span></td>`
+                        : `<td class="${selCls(k)}"><span class="rod-zero">-</span></td>`;
+                }
+                return row + `<td>${d.dobras.length}</td></tr>`;
+            }).join('') : `<tr><td colspan="${diasMes + 4}" style="text-align:center; padding:30px; color:#64748b;">Nenhuma dobra neste mês.</td></tr>`;
+
+            let tf = '<tr><td>TOTAL NO DIA</td><td></td><td></td>';
+            porDia.forEach((v, i) => tf += `<td class="${selCls(i + 1)}">${v || '<span class="rod-zero">-</span>'}</td>`);
+            tf += `<td>${total}</td></tr>`;
+            document.getElementById('rod-matriz-foot').innerHTML = tf;
+
+            renderCalendario(porDia);
+        }
+
+        function renderCalendario(porDia) {
+            const { diasMes, m, y, refDay } = R;
+            document.getElementById('rod-cal-title').innerHTML =
+                `<i class="fa-solid fa-calendar-days" style="color:var(--brand)"></i> Calendário de Dobras — ${MESES[m - 1]}/${y}`;
+
+            const primeiroDow = new Date(y, m - 1, 1).getDay();
+            let html = '';
+            for (let x = 0; x < primeiroDow; x++) html += '<div class="rod-day rod-day-empty"></div>';
+            for (let k = 1; k <= diasMes; k++) {
+                const st = statusDia(k), n = porDia[k - 1];
+                const imp = R.importados[k] || {};
+                let cls, body;
+                if (n > 0) { cls = 'rod-d-dobra'; body = `<div class="rod-day-n">${n} dobra${n > 1 ? 's' : ''}</div>`; }
+                else if (st === 'ok') { cls = 'rod-d-ok'; body = `<div class="rod-day-st"><i class="fa-solid fa-check"></i> Sem dobra</div>`; }
+                else if (st === 'inc') { cls = 'rod-d-inc'; body = `<div class="rod-day-st">Só ${imp.AM ? 'AM' : 'PM'}</div>`; }
+                else { cls = 'rod-d-none'; body = `<div class="rod-day-st">${k > refDay ? '' : 'Sem registro'}</div>`; }
+                const turnos = `<span class="t ${imp.AM ? 'on' : ''}">AM</span><span class="t ${imp.PM ? 'on' : ''}">PM</span>`;
+                html += `<div class="rod-day ${cls} ${k === diaSel ? 'sel' : ''} ${k === R.hoje ? 'today' : ''}" onclick="rodSelDia(${k})">
+                    <div class="rod-day-top"><b>${pad(k)}</b><span class="rod-day-t">${turnos}</span></div>${body}</div>`;
+            }
+            document.getElementById('rod-cal').innerHTML = html;
+            renderDetalhe(porDia);
+        }
+
+        function renderDetalhe(porDia) {
+            const el = document.getElementById('rod-cal-detail');
+            if (!diaSel) {
+                el.innerHTML = `<div class="rod-det-empty"><i class="fa-solid fa-hand-pointer"></i><br>Clique em um dia do calendário para ver o detalhe e a prova daquele dia.</div>`;
+                return;
+            }
+            const k = diaSel, { m, y } = R;
+            const imp = R.importados[k] || {}, st = statusDia(k), n = porDia[k - 1];
+            const dow = SEMANA_LONGA[new Date(y, m - 1, k).getDay()];
+
+            let veredito;
+            if (n) veredito = `<div class="rod-det-v rod-v-dobra"><i class="fa-solid fa-circle-exclamation"></i> ${n} dobra${n > 1 ? 's' : ''} neste dia</div>`;
+            else if (st === 'ok') veredito = `<div class="rod-det-v rod-v-ok"><i class="fa-solid fa-circle-check"></i> Nenhuma dobra — comprovado</div>`;
+            else if (st === 'inc') veredito = `<div class="rod-det-v rod-v-inc"><i class="fa-solid fa-triangle-exclamation"></i> Não dá para comprovar: falta importar o ${imp.AM ? 'PM' : 'AM'}</div>`;
+            else veredito = `<div class="rod-det-v rod-v-none"><i class="fa-solid fa-circle-minus"></i> Nenhum turno importado neste dia</div>`;
+
+            let texto = '';
+            if (n) texto = `<div class="rod-det-txt"><i class="fa-solid fa-table-cells" style="color:var(--brand)"></i> Os motoristas que dobraram estão na <b>Matriz de Dobras</b>, com a coluna do dia ${pad(k)}/${pad(m)} destacada.</div>`;
+            else if (st === 'ok') texto = `<div class="rod-det-txt">Nenhum motorista de ${CATS[catAtiva].nome} aparece marcado no AM <b>e</b> no PM deste dia no Histórico de Alocação.</div>`;
+
+            el.innerHTML = `
+                <div class="rod-det-date">${pad(k)}/${pad(m)}/${y}</div><div class="rod-det-dow">${dow}</div>
+                ${veredito}
+                <div class="rod-det-imp">
+                    <div class="${imp.AM ? 'on' : ''}"><span>Turno AM</span><b>${imp.AM ? `Importado · ${imp.nAM} motoristas` : 'Não importado'}</b></div>
+                    <div class="${imp.PM ? 'on' : ''}"><span>Turno PM</span><b>${imp.PM ? `Importado · ${imp.nPM} motoristas` : 'Não importado'}</b></div>
+                </div>
+                ${texto}`;
+        }
+    })();
 </script>
 </body>
 </html>
