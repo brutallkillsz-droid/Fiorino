@@ -270,6 +270,9 @@
         .rod-scroll::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
         #rod-fila td { padding: 7px 10px; }
         #rod-fila th { padding: 11px 10px; }
+        #rod-fila th.rod-sort { cursor: pointer; user-select: none; color: #a5f3fc; transition: 0.2s; }
+        #rod-fila th.rod-sort:hover { background: #111c33; color: #fff; }
+        #rod-fila th.rod-sort i { margin-left: 4px; color: var(--brand); }
         .rod-pos { display: inline-flex; width: 26px; height: 26px; align-items: center; justify-content: center; border-radius: 6px; background: rgba(255,255,255,0.05); font-weight: 800; font-size: 11px; }
         .rod-pos.next { background: var(--brand); color: #fff; }
         .rod-bar { position: relative; height: 8px; width: 180px; background: #1e293b; border-radius: 6px; }
@@ -654,7 +657,7 @@
                             <th style="text-align:center;">Fila</th>
                             <th>Motorista</th>
                             <th>Veículo</th>
-                            <th style="text-align:center;">Dias no Mês</th>
+                            <th id="rod-th-dias" class="rod-sort" style="text-align:center;" onclick="rodOrdenarDias()" title="Clique para alternar: menor → maior / maior → menor">Dias no Mês <i class="fa-solid fa-arrow-up-short-wide"></i></th>
                             <th>Turnos</th>
                             <th style="text-align:center;">Dobras</th>
                             <th>Última Rota</th>
@@ -2225,6 +2228,15 @@
         window.rodSelDia = function (k) { diaSel = (diaSel === k ? null : k); render(); };
         window.rodRender = function () { if (R) render(); };
 
+        // Ordenação da coluna "Dias no Mês": 'asc' = menor → maior (padrão), 'desc' = maior → menor
+        let ordemDias = 'asc';
+        window.rodOrdenarDias = function () {
+            ordemDias = ordemDias === 'asc' ? 'desc' : 'asc';
+            const th = document.getElementById('rod-th-dias');
+            th.innerHTML = `Dias no Mês <i class="fa-solid ${ordemDias === 'asc' ? 'fa-arrow-up-short-wide' : 'fa-arrow-down-wide-short'}"></i>`;
+            if (R) renderFila();
+        };
+
         function render() {
             renderCards();
             renderFila();
@@ -2304,11 +2316,15 @@
             const s = resumo(lista);
             const escala = (s.max * 1.1) || 1;
             const busca = (document.getElementById('rod-busca').value || '').toUpperCase().trim();
+            // Posição na fila de rodízio é sempre a mesma (quem rodou menos primeiro), independente da ordenação da tela
             const fila = [...lista].sort((a, b) => a.dias - b.dias || a.ultimo - b.ultimo);
+            const posFila = new Map(fila.map((d, i) => [d, i]));
+            const exibir = ordemDias === 'asc' ? fila : [...fila].reverse();
             const hoje0 = new Date(); hoje0.setHours(0, 0, 0, 0);
 
             let html = '';
-            fila.forEach((d, idx) => {
+            exibir.forEach(d => {
+                const idx = posFila.get(d);
                 if (busca && !d.nome.toUpperCase().includes(busca)) return;
                 const ratio = s.media > 0 ? d.dias / s.media : 1;
                 const st = ratio < 0.8 ? ['rod-b-low', 'Abaixo', '#3b82f6'] : ratio > 1.2 ? ['rod-b-high', 'Acima', '#ef4444'] : ['rod-b-ok', 'Equilibrado', '#10b981'];
