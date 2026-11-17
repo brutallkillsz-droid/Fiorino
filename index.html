@@ -3,15 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sinergia Xpress</title>
+    <title>Prévia Filtro Histórico</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
    
-    <!-- FIREBASE -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script>(function(){
+  // "Hoje" fixo: terça 27/10/2026 (só para a prévia)
+  const RealDate = Date, FIX = new RealDate(2026, 9, 27, 9, 0, 0).getTime();
+  window.Date = class extends RealDate { constructor(...a){ if(!a.length){ super(FIX); } else { super(...a); } } static now(){ return FIX; } };
+  const U = [['ADRIANO SILVA','FIORINO'],['BRUNO COSTA','FIORINO'],['CARLOS EDUARDO','VAN'],['DANIEL ROCHA','FIORINO'],['EDSON LIMA','VUC'],['FABIO MENDES','FIORINO'],['GUSTAVO ALVES','VAN'],['HENRIQUE DIAS','FIORINO'],['IGOR SANTOS','VAN'],['JOAO PEDRO','FIORINO']];
+  const P = [['KLEBER NUNES','PASSEIO'],['LUCAS MARTINS','PASSEIO'],['MARCOS VINICIUS','PASSEIO'],['NATAN OLIVEIRA','CARRO PASSEIO'],['OTAVIO RIBEIRO','PASSEIO'],['PAULO HENRIQUE','PASSEIO']];
+  const M = [['RAFAEL SOUZA','MOTO'],['SERGIO PRADO','MOTO'],['THIAGO MOURA','MOTO'],['VITOR HUGO','MOTO'],['YURI CAMPOS','MOTO']];
+  let s=11; const rnd=()=>(s=(s*9301+49297)%233280)/233280;
+  const domUtil = { 4:[0,3,6], 11:[1,4,8], 18:[2,5,9], 25:[0,7,3] };
+  const db = {};
+  for (let d=1; d<=27; d++){
+    const key='202610'+String(d).padStart(2,'0'); db[key]={};
+    const dow = new RealDate(2026,9,d).getDay(); const segter = dow===1||dow===2;
+    const dom = segter ? domUtil[d-dow] || [] : [];
+    const add=(nome,v,id)=>{ let am=rnd()<0.7, pm=!am||rnd()<0.12; if(d===9||d===27) {am=true; pm=false;}
+      db[key][nome]={id:String(id),veiculo:v,AM:am,PM:pm,rejected:false,count:0,cluster_real:''}; };
+    U.forEach(([n,v],i)=>{ let p;
+      if(dow===0) p = (domUtil[d]||[]).includes(i) ? 1 : 0;
+      else if(segter) p = dom.includes(i) ? 1 : 0.62;
+      else p = 0.5;
+      if(rnd()<p) add(n,v,1000+i); });
+    P.forEach(([n,v],i)=>{ const p = segter?0.1:(dow===0?0.4:0.62); if(rnd()<p) add(n,v,2000+i); });
+    M.forEach(([n,v],i)=>{ if(rnd()<0.58) add(n,v,3000+i); });
+  }
+  function q(){ let sa=null, ea=null; const o={ orderByKey(){return o;}, startAt(v){sa=v;return o;}, endAt(v){ea=v;return o;},
+    once(){ const out={}; Object.keys(db).forEach(k=>{ if((!sa||k>=sa)&&(!ea||k<=ea)) out[k]=db[k]; });
+      return Promise.resolve({exists:()=>Object.keys(out).length>0, val:()=>out}); }, on(){}, off(){}, set(){return Promise.resolve();}, remove(){return Promise.resolve();} }; return o; }
+  const authObj = { setPersistence(){}, onAuthStateChanged(cb){ setTimeout(()=>cb({uid:'x'}),0); }, signInWithEmailAndPassword(){return Promise.resolve();}, signOut(){return Promise.resolve();} };
+  const auth=()=>authObj; auth.Auth={Persistence:{LOCAL:'local'}};
+  window.firebase={ initializeApp(){}, auth, database(){ return { ref(){ return q(); } }; } };
+})();
+</script>
     <!-- Leitor de Excel -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
 
@@ -106,14 +134,6 @@
         }
         .logo h1 { font-family: 'Montserrat', sans-serif; font-size: 18px; margin: 0; text-transform: uppercase; letter-spacing: 1px; }
         .text-shopee { color: var(--brand); font-weight: 800; }
-        .regional-badge {
-            margin-left: 12px; padding: 3px 8px; border: 1px solid #ff6a00; border-radius: 4px;
-            color: #ff7a1a; font-family: 'Montserrat', sans-serif; font-size: 10px; font-weight: 800;
-            letter-spacing: 0.8px; text-transform: uppercase; white-space: nowrap; line-height: 1.3;
-            text-shadow: 0 0 6px rgba(255, 106, 0, 0.9), 0 0 12px rgba(255, 106, 0, 0.5);
-            box-shadow: 0 0 6px rgba(255, 106, 0, 0.55), inset 0 0 6px rgba(255, 106, 0, 0.25);
-            background: rgba(255, 106, 0, 0.06);
-        }
        
         .dashboard-nav { background: #0b1120; border-bottom: 1px solid var(--border); display: flex; padding: 0 40px; flex-wrap: wrap; }
         .nav-module { padding: 20px 20px; cursor: pointer; color: var(--text-muted); font-weight: 700; font-size: 12px; text-transform: uppercase; border-bottom: 3px solid transparent; transition: 0.3s; }
@@ -405,12 +425,6 @@
        
         /* CUSTOM POPUP */
         .custom-popup { position: absolute; background: #1e293b; border: 1px solid #334155; width: 380px; max-height: 250px; overflow-y: auto; z-index: 9999; box-shadow: 0 10px 40px rgba(0,0,0,0.6); border-radius: 8px; font-size: 11px; }
-
-        /* ALOCAÇÃO DIÁRIA: rolagem única pela página (sem barra interna) */
-        #module-alocacao .table-wrap { height: auto; overflow: visible; will-change: auto; transform: none; }
-        #module-alocacao .table-scroll { overflow: visible; }
-        #module-alocacao .table-scroll th { top: var(--topbar-h, 66px); }
-        #module-alocacao .custom-popup { max-height: 360px; }
         .popup-item { padding: 10px 15px; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center; transition: 0.1s; }
         .popup-item:hover { background: var(--brand); color: white !important; }
         .status-free { color: #fff; font-weight: 600; border-left: 3px solid #10b981; background: linear-gradient(90deg, rgba(16,185,129,0.1) 0%, transparent 100%); }
@@ -448,11 +462,11 @@
 
 <!-- CONTEÚDO PRINCIPAL DO APP -->
 <div id="app-content">
+    <div style="background:#f59e0b;color:#000;text-align:center;font-size:11px;font-weight:800;padding:6px;letter-spacing:1px;text-transform:uppercase;">Prévia com dados fictícios · "hoje" simulado como 27/10/2026 · nada aqui está ligado ao banco</div>
     <div class="top-bar">
         <div style="display:flex; align-items:center;">
             <img src="shopee_pet.png" class="mascot-mini" onerror="this.style.display='none'">
             <div class="logo"><h1>Sinergia <span class="text-shopee">Xpress</span></h1></div>
-            <span class="regional-badge" title="Regional">LMG44 - Uberaba MG</span>
         </div>
         <div style="display:flex; align-items:center; gap: 15px;">
             <div id="file-info" style="font-size:11px; color:#94a3b8; font-weight:500;">Aguardando...</div>
@@ -518,7 +532,6 @@
                                 <th style="width: 70px;">Rota AT</th>
                                 <th style="width: 100px;">AT / TO</th>
                                 <th style="width: 60px; color: #a5f3fc;">Litragem</th>
-                                <th style="width: 45px; text-align:center; color: #f472b6;">GG</th>
                                 <th style="width: 360px;">Nome Motorista (Popup Auto)</th>
                                 <th style="width: 130px;">ID / Turno</th>
                                 <th style="width: 100px;">Veículo</th>
@@ -970,7 +983,7 @@
     function findHeaderRow(ws) { let range = XLSX.utils.decode_range(ws['!ref']); for(let R=range.s.r; R<= Math.min(range.e.r, 15); ++R) { for(let C=range.s.c; C<=range.e.c; ++C) { let cell = ws[XLSX.utils.encode_cell({r:R, c:C})]; if(cell && cell.v) { let v = String(cell.v).toLowerCase(); if(v.includes("rota") || v.includes("at /") || v.includes("motorista")) return R; } } } return 0; }
    
     function mapColumns(ws, rowIdx) {
-        let map = { rotaAt:'A', atTo:'B', letra:'C', clusterR:'F', litragem:'T', gg:'S', nome:'A', id:'C', clusterM:'E', veic:'H', rodou:'B', hora:'G', turno:'D', envelopado:'Z' };
+        let map = { rotaAt:'A', atTo:'B', letra:'C', clusterR:'F', litragem:'T', nome:'A', id:'C', clusterM:'E', veic:'H', rodou:'B', hora:'G', turno:'D', envelopado:'Z' };
         let range = XLSX.utils.decode_range(ws['!ref']);
         for(let C=range.s.c; C<=range.e.c; ++C) {
             let cell = ws[XLSX.utils.encode_cell({r:rowIdx, c:C})];
@@ -981,7 +994,6 @@
             if(h.includes("letra") || h.includes("rota id")) map.letra = colLet;
             if(h.includes("cidade") || h.includes("destino") || h.includes("municipio") || h.includes("endereço") || h.includes("cluster")) map.clusterR = colLet;
             if(h.includes("litragem") || h.includes("volume") || h.includes("cubagem") || h.includes("vol.")) map.litragem = colLet;
-            if(h.trim() === "gg") map.gg = colLet;   // pacotes GG (coluna S do romaneio)
             if(h.includes("nome")) map.nome = colLet;
             if(h.includes("id") && !h.includes("rota")) map.id = colLet;
             if(h.includes("cluster") || h.includes("preferencia")) map.clusterM = colLet;
@@ -1162,8 +1174,7 @@
                 letra: String(r['C'] || r[mapR.letra] || ""),
                 cluster: clusterVal,
                 st: 'pendente',
-                litragem: String(r[mapR.litragem] || "-"),
-                gg: (r[mapR.gg] === undefined || r[mapR.gg] === null || r[mapR.gg] === "") ? "-" : String(r[mapR.gg])
+                litragem: String(r[mapR.litragem] || "-")
             });
         });
 
@@ -1276,7 +1287,7 @@
                     }
                    
                     if(match) {
-                        store.allocated.push({ rota: r.id, at: r.at, nome: m.nome, id: m.id, veic: m.veic, letra: r.letra, rodou: m.rodou, cluster: r.cluster, litragem: r.litragem, gg: r.gg, matchType: type, rejected: false, turno: m.turno });
+                        store.allocated.push({ rota: r.id, at: r.at, nome: m.nome, id: m.id, veic: m.veic, letra: r.letra, rodou: m.rodou, cluster: r.cluster, litragem: r.litragem, matchType: type, rejected: false, turno: m.turno });
                         m.disp = false; r.st = 'ok'; break;
                     }
                 }
@@ -1285,7 +1296,7 @@
 
         runMatch(false); if(useAll) runMatch(true);
 
-        rotasValidas.forEach(r => { if(r.st !== 'ok') store.routes.push({ rota: r.id, at: r.at, letra: r.letra, cluster: r.cluster, litragem: r.litragem, gg: r.gg }); });
+        rotasValidas.forEach(r => { if(r.st !== 'ok') store.routes.push({ rota: r.id, at: r.at, letra: r.letra, cluster: r.cluster, litragem: r.litragem }); });
         frota.forEach(m => { if(m.disp) store.drivers.push({ nome: m.nome, id: m.id, veic: m.veic, cluster: m.cluster, turno: m.turno }); });
 
         updateStats(ignored);
@@ -1296,69 +1307,7 @@
         for (let t of mTok) { if (rTok.includes(t)) return t; } return null;
     }
 
-    // Altura da barra do topo, para o cabeçalho da tabela grudar logo abaixo dela
-    function setTopbarH() {
-        let tb = document.querySelector('.top-bar');
-        if(tb && tb.offsetHeight) document.documentElement.style.setProperty('--topbar-h', tb.offsetHeight + 'px');
-    }
-    window.addEventListener('resize', setTopbarH);
-
-    // Segunda ou terça, pela data do romaneio (se ainda não tiver romaneio, usa a data de hoje)
-    function isSegOuTerRomaneio() {
-        let c = (db && db.dataCode) ? String(db.dataCode) : "";
-        let d = (c.length === 8) ? new Date(+c.slice(0,4), +c.slice(4,6) - 1, +c.slice(6,8)) : new Date();
-        let w = d.getDay();
-        return w === 1 || w === 2;
-    }
-
-    // ===== CLUSTERS NO POPUP DE TROCA (não altera a alocação automática) =====
-    // Compara pelo NOME da cluster (o número do início da planilha é ignorado):
-    //   "16. Uberaba Rota 05"      -> UBERABA ROTA 5     (só bate com quem marcou Uberaba Rota 05)
-    //   "05. Conceição Alagoas"    -> CONCEICAO ALAGOAS  (= "Conceição das Alagoas")
-    //   "03. Aramina - Iguarapava" -> ARAMINA e IGARAPAVA
-    //   Rota só com a cidade ("Uberaba") -> bate com quem marcou qualquer Uberaba Rota XX
-    const APELIDOS_CIDADE = { "IGUARAPAVA": "IGARAPAVA" };   // grafias diferentes da mesma cidade
-    function nomeCl(s) {
-        let t = cleanBasic(s)
-            .replace(/^\s*\d+\s*[.)]\s*/, " ")          // tira o código do início ("16. ")
-            .replace(/\bCLUSTERS?\b/g, " ")
-            .replace(/[^A-Z0-9]+/g, " ")
-            .replace(/\b(DA|DAS|DE|DO|DOS)\b/g, " ")      // "Conceição das Alagoas" = "Conceição Alagoas"
-            .replace(/\b0+(\d)/g, "$1")                   // "Rota 05" = "Rota 5"
-            .replace(/\s+/g, " ").trim();
-        if(/^\d+$/.test(t)) return "";                    // só número não vale
-        return APELIDOS_CIDADE[t] || t;
-    }
-    function cidadeDoCl(nome) { return nome.replace(/\bROTA \d+\b/g, " ").replace(/\s+/g, " ").trim(); }
-    // Clusters de uma célula: separadas por vírgula, ponto e vírgula, |, quebra de linha ou " - "
-    function itensCl(s) {
-        return cleanBasic(s).split(/[;,|\n\r]+|\s+-\s+/).map(nomeCl).filter(Boolean);
-    }
-    // O motorista marcou a cluster da rota?
-    function bateClusterPopup(clMotorista, clRota) {
-        let marcadas = itensCl(clMotorista);
-        if(marcadas.length === 0) return false;
-        return itensCl(clRota).some(r => {
-            if(/\bROTA \d+\b/.test(r)) return marcadas.includes(r);          // rota específica: tem que ser igual
-            return marcadas.some(d => d === r || cidadeDoCl(d) === r);        // só a cidade: qualquer rota dela
-        });
-    }
-    // Coringa: marcou ALL (mesma regra do sistema: ALL/TODOS/TODAS/QUALQUER/CURINGA) -> aparece em todas as clusters
-    function isCoringaPopup(cl) {
-        if(!cl) return false;
-        return isAll(cl);
-    }
-    // Clusters marcadas por um motorista livre
-    function clusterDoLivre(nome) {
-        let k = String(nome || "").trim().toUpperCase();
-        let d = store.drivers.find(x => String(x.nome || "").trim().toUpperCase() === k);
-        let c = (d && d.cluster) ? String(d.cluster) : "";
-        if(!c || c === "Reciclado" || c === "MANUAL") c = (window.driverOriginalData[k] || {}).cluster || c;
-        return c;
-    }
-
     function renderScreen() {
-        setTopbarH();
         document.getElementById('view-upload').style.display = 'none';
         document.getElementById('view-dashboard').style.display = 'block';
         document.getElementById('footer-actions').style.display = 'flex';
@@ -1419,7 +1368,6 @@
                 <td style="text-align:center; font-weight:900; color:#a5f3fc; font-size:13px;">${daysInMonthCount}</td>
                 <td>${r.rota}</td><td>${r.at}</td>
                 <td style="color:#a5f3fc; text-align:center;">${r.litragem || '-'}</td>
-                <td style="color:#f472b6; text-align:center; font-weight:700;">${(r.gg === undefined || r.gg === null || r.gg === '') ? '-' : r.gg}</td>
                 <td style="position:relative;" title="${tip}">
                     <div style="display:flex; align-items:center; gap:6px;">
                         ${dotHtml}
@@ -1492,7 +1440,7 @@
         if(el) el.innerHTML = h3;
     }
 
-    function checkFree(name) { let k = String(name || "").trim().toUpperCase(); return store.drivers.some(d => String(d.nome || "").trim().toUpperCase() === k); }
+    function checkFree(name) { return store.drivers.some(d => d.nome.toUpperCase() === name.toUpperCase()); }
 
     window.onNameChange = function(idx, val) {
         let cleanName = val.trim().toUpperCase(); let oldName = store.allocated[idx].nome;
@@ -1521,65 +1469,18 @@
 
         let a = document.createElement("DIV"); a.className = "custom-popup"; a.style.top = (inp.offsetTop + inp.offsetHeight) + "px"; a.style.left = inp.offsetLeft + "px"; a.style.width = inp.offsetWidth + "px"; inp.parentNode.appendChild(a);
 
-        // Mostra SOMENTE os motoristas livres (mesma lista da aba LIVRES)
-        let livres = store.drivers.map(d => String(d.nome || "").trim()).filter(n => n.length > 0);
-        // Ao clicar num campo que já tem o motorista da rota, não filtra pelo nome dele; filtra só quando digitar algo diferente
-        let atual = String(store.allocated[idx].nome || "").trim().toUpperCase();
-        let filtro = (val && val.trim().toUpperCase() !== atual) ? val.trim() : "";
-
-        // Filtro por cluster da rota: aparecem quem marcou essa cluster + os coringas (AL). Digitando um nome, busca em todos os livres.
-        if(window.popupVerTodosIdx !== idx) window.popupVerTodos = false;
-        let verTodos = !!window.popupVerTodos;
-        let rotaCl = String(store.allocated[idx].cluster || "").trim();
-        let clOf = n => clusterDoLivre(n);
-        let bateRota = n => !!rotaCl && (bateClusterPopup(clOf(n), rotaCl) || isCoringaPopup(clOf(n)));
-        let usandoFiltroCluster = !filtro && !!rotaCl && !verTodos;
-
-        let matches;
-        if(filtro) matches = livres.filter(d => d.toUpperCase().includes(filtro.toUpperCase()));
-        else if(usandoFiltroCluster) matches = livres.filter(d => bateRota(d));
-        else matches = livres;
-        let foraDoFiltro = usandoFiltroCluster ? (livres.length - matches.length) : 0;
-
-        // Segunda e terça: quem rodou domingo vem primeiro. Depois (e nos outros dias): quem menos rodou no mês (rodízio).
-        let segTer = isSegOuTerRomaneio();
-        let rodouDomingo = n => segTer && window.currentSundayDrivers && window.currentSundayDrivers.has(n.toUpperCase());
-
+        let matches = [];
+        if(!val) matches = allDriversList; else matches = allDriversList.filter(d => d.toUpperCase().includes(val.toUpperCase()));
+       
         matches.sort((a,b) => {
-            let domA = rodouDomingo(a) ? 1 : 0;
-            let domB = rodouDomingo(b) ? 1 : 0;
-            if(domA !== domB) return domB - domA;
+            let isFreeA = checkFree(a) ? 1 : 0;
+            let isFreeB = checkFree(b) ? 1 : 0;
+            if(isFreeA !== isFreeB) return isFreeB - isFreeA;
 
             let countA = window.currentMonthDriverCounts[a.toUpperCase()] || 0;
             let countB = window.currentMonthDriverCounts[b.toUpperCase()] || 0;
             return countA - countB;
         });
-
-        // Cabeçalho do popup com a cluster da rota e botão para alternar entre "só da cluster" e "todos os livres"
-        if(!filtro && rotaCl) {
-            let cab = document.createElement("DIV"); cab.className = "popup-item";
-            cab.style.cssText = "cursor:default; gap:12px; background:#0b1120; color:#94a3b8; font-size:10px; position:sticky; top:0; z-index:2;";
-            let txt = verTodos
-                ? `Todos os livres (${livres.length})`
-                : `Cluster <b style="color:#fde047;">${rotaCl}</b> · ${matches.length} livre(s)`;
-            let rotuloBtn = verTodos ? "Só desta cluster" : `Ver todos os livres (${livres.length})`;
-            cab.innerHTML = `<span>${txt}</span><span class="pv-toggle" style="color:#60a5fa; cursor:pointer; font-weight:700;">${rotuloBtn}</span>`;
-            cab.querySelector('.pv-toggle').addEventListener("mousedown", function(e) {
-                e.preventDefault();
-                window.popupVerTodos = !verTodos; window.popupVerTodosIdx = idx;
-                window.onInputName(idx, inp);
-            });
-            a.appendChild(cab);
-        }
-
-        if(matches.length === 0) {
-            let vazio = document.createElement("DIV"); vazio.className = "popup-item";
-            vazio.style.color = "#64748b"; vazio.style.cursor = "default";
-            if(filtro) vazio.innerText = "Nenhum motorista livre com esse nome";
-            else if(usandoFiltroCluster && foraDoFiltro > 0) vazio.innerText = `Nenhum livre marcou a cluster ${rotaCl}. Clique em "Ver todos os livres".`;
-            else vazio.innerText = "Nenhum motorista livre";
-            a.appendChild(vazio);
-        }
 
         let count = 0;
         for(let i=0; i<matches.length; i++) {
@@ -1590,17 +1491,16 @@
             let b = document.createElement("DIV"); b.className = isFree ? "popup-item status-free" : "popup-item status-busy";
            
             let isSunday = (hoje.getDay() <= 3 && window.currentSundayDrivers && window.currentSundayDrivers.has(upperName));
-            // Amarelo: marcou a cluster desta rota ou é coringa (AL)
-            let isMatch = bateRota(sName);
+            let isMatch = (window.activeSwapCluster && checkDeepMatch(orig.cluster, window.activeSwapCluster));
             let isEnv = window.envelopadosSet && window.envelopadosSet.has(upperName);
-
+           
             let neonClass = "";
             let envClass = "";
-
+           
             if(isSunday && isMatch) neonClass = "neon-both";
             else if(isSunday) neonClass = "neon-sunday";
             else if(isMatch) neonClass = "neon-match";
-
+           
             if (isEnv) {
                 envClass = "box-envelopado";
             }
@@ -1635,6 +1535,7 @@
             });
             a.appendChild(b);
             count++;
+            if(count > 30) break;
         }
     }
 
@@ -1653,7 +1554,7 @@
         }
     }
    
-    function consumeFreeDriver(nameKey) { let k = String(nameKey || "").trim().toUpperCase(); let freeIdx = store.drivers.findIndex(d => String(d.nome || "").trim().toUpperCase() === k); if(freeIdx > -1) store.drivers.splice(freeIdx, 1); }
+    function consumeFreeDriver(nameKey) { let freeIdx = store.drivers.findIndex(d => d.nome.toUpperCase() === nameKey); if(freeIdx > -1) store.drivers.splice(freeIdx, 1); }
    
     function closeAllLists() {
         let x = document.getElementsByClassName("custom-popup");
@@ -1696,7 +1597,7 @@
 
     window.pullRemainingRoutes = function() {
         if(store.routes.length === 0) return alert("Não há rotas sobrando.");
-        let pulled = store.routes.map(r => ({ rota: r.rota, at: r.at, nome: "", id: "", veic: "", letra: r.letra, rodou: "", cluster: r.cluster, litragem: r.litragem, gg: r.gg, matchType: "Manual", rejected: false, turno: "" }));
+        let pulled = store.routes.map(r => ({ rota: r.rota, at: r.at, nome: "", id: "", veic: "", letra: r.letra, rodou: "", cluster: r.cluster, litragem: r.litragem, matchType: "Manual", rejected: false, turno: "" }));
         store.allocated = [...store.allocated, ...pulled]; store.routes = []; renderScreen(); updateStats(0);
     }
 
@@ -2687,5 +2588,221 @@
         }
     })();
 </script>
+<!-- =====================================================================
+     FILTRO DE VEÍCULO + PERÍODO (7 / 15 DIAS) — HISTÓRICO DE ALOCAÇÃO
+     Cole este bloco inteiro logo ANTES de </body>.
+     Não altera nenhuma função existente: só mostra/esconde e reordena as
+     linhas da matriz que já foi desenhada pelo sistema.
+     ===================================================================== -->
+<style>
+    .hv-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+    .hv-left { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .hv-periodo { display: inline-flex; background: #0f172a; border: 1px solid #1e293b; border-radius: 999px; padding: 3px; }
+    .hv-per { padding: 5px 13px; border-radius: 999px; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #94a3b8; cursor: pointer; user-select: none; transition: 0.2s; white-space: nowrap; }
+    .hv-per:hover { color: #fff; }
+    .hv-per.active { background: var(--brand, #EE4D2D); color: #fff; }
+    .hv-sep { width: 1px; height: 24px; background: #1e293b; }
+    .hv-chips { display: flex; gap: 8px; flex-wrap: wrap; }
+    .hv-chip { display: inline-flex; align-items: center; gap: 7px; background: #0f172a; border: 1px solid #1e293b; color: #94a3b8;
+        padding: 7px 13px; border-radius: 999px; font-size: 11px; font-weight: 700; text-transform: uppercase; cursor: pointer; transition: 0.2s; user-select: none; }
+    .hv-chip:hover { border-color: #334155; color: #fff; }
+    .hv-chip i { color: var(--hv); }
+    .hv-chip .hv-n { background: rgba(255,255,255,0.06); color: #cbd5e1; padding: 1px 7px; border-radius: 999px; font-size: 10px; }
+    .hv-chip.active { background: color-mix(in srgb, var(--hv) 16%, #0f172a); border-color: var(--hv); color: #fff; }
+    .hv-chip.active .hv-n { background: var(--hv); color: #fff; }
+    .hv-chip.hv-zero { opacity: 0.4; }
+    .hv-resumo { font-size: 11px; color: #94a3b8; text-align: right; line-height: 1.5; }
+    .hv-resumo b { color: #fff; }
+    #b-historico tr.hv-hide { display: none !important; }
+
+    /* Coluna do período e dias dentro da janela */
+    #t4 th.hv-col, #t4 td.hv-col { text-align: center; min-width: 58px; border-left: 1px solid rgba(238,77,45,0.35);
+        position: sticky; z-index: 20; background: #0f172a; box-shadow: -8px 0 15px -8px rgba(0,0,0,0.8); }
+    #t4 th.hv-col { color: #fb923c !important; background: #0b1120; z-index: 30; }
+    #t4 .hv-col-n { display: inline-flex; align-items: center; justify-content: center; min-width: 26px; height: 22px; padding: 0 6px; border-radius: 6px;
+        font-weight: 900; font-size: 12px; color: #fdba74; background: rgba(238,77,45,0.12); border: 1px solid rgba(238,77,45,0.35); }
+    #t4 .hv-col-n.hv-top { color: #fff; background: var(--brand, #EE4D2D); border-color: var(--brand, #EE4D2D); }
+    #t4 .hv-col-n.hv-low { color: #64748b; background: transparent; border-color: #1e293b; }
+    #t4 th.hv-win { background: #1a1424 !important; color: #fff !important; }
+    #t4 td.hv-win { background: rgba(238,77,45,0.05); }
+</style>
+<script>
+    (function () {
+        const GRUPOS = [
+            { k: 'TODOS',   nome: 'Todos',   icon: 'fa-layer-group',  cor: '#94a3b8' },
+            { k: 'FIORINO', nome: 'Fiorino', icon: 'fa-truck-pickup', cor: '#EE4D2D' },
+            { k: 'VAN',     nome: 'Van',     icon: 'fa-van-shuttle',  cor: '#10b981' },
+            { k: 'VUC',     nome: 'VUC',     icon: 'fa-truck',        cor: '#3b82f6' },
+            { k: 'PASSEIO', nome: 'Passeio', icon: 'fa-car-side',     cor: '#f59e0b' },
+            { k: 'MOTO',    nome: 'Moto',    icon: 'fa-motorcycle',   cor: '#8b5cf6' },
+            { k: 'OUTROS',  nome: 'Sem veículo', icon: 'fa-circle-question', cor: '#64748b' }
+        ];
+        const PERIODOS = [{ d: 0, nome: 'Mês' }, { d: 7, nome: '7 dias' }, { d: 15, nome: '15 dias' }];
+        let filtro = 'TODOS';
+        let periodo = 0;
+        let observer = null;
+        let seq = 0;
+        const pad = n => String(n).padStart(2, '0');
+
+        function tipo(v) {
+            v = String(v || '').toUpperCase().trim();
+            if (!v || v === '-') return 'OUTROS';
+            if (v.includes('MOTO')) return 'MOTO';
+            if (v.includes('VAN')) return 'VAN';
+            if (v.includes('PASSEIO') || v.includes('CARRO')) return 'PASSEIO';
+            if (v.includes('VUC') || v.includes('HR') || v.includes('BAU') || v.includes('CAMINHAO')) return 'VUC';
+            if (v.includes('FIORINO') || v.includes('UTILITARIO')) return 'FIORINO';
+            return 'OUTROS';
+        }
+
+        // Janela de dias (dentro do mês mostrado na matriz)
+        function janela() {
+            const mp = document.getElementById('month-picker');
+            if (!periodo || !mp || !mp.value) return null;
+            const y = parseInt(mp.value.split('-')[0], 10), m = parseInt(mp.value.split('-')[1], 10);
+            const diasMes = new Date(y, m, 0).getDate();
+            const hoje = new Date();
+            const chaveHoje = hoje.getFullYear() * 100 + hoje.getMonth() + 1, chaveSel = y * 100 + m;
+            if (chaveSel > chaveHoje) return { vazio: true, m };
+            const fim = chaveSel === chaveHoje ? hoje.getDate() : diasMes;
+            const iniReal = fim - periodo + 1;
+            return { ini: Math.max(1, iniReal), fim, m, cortado: iniReal < 1 };
+        }
+
+        function valorCelula(td) {
+            const n = parseInt((td.innerText || '').trim(), 10);
+            return isNaN(n) ? 0 : n;
+        }
+
+        function aplicar() {
+            const tbody = document.getElementById('b-historico');
+            const thead = document.getElementById('h-historico');
+            if (!tbody || !document.getElementById('hv-bar')) return;
+            if (observer) observer.disconnect();
+
+            const linhas = Array.from(tbody.rows).filter(tr => tr.cells.length >= 4 && !tr.cells[0].hasAttribute('colspan'));
+            linhas.forEach(tr => { if (!tr.dataset.hvIdx) tr.dataset.hvIdx = ++seq; });
+
+            // Limpa marcações anteriores do período
+            tbody.querySelectorAll('td.hv-col').forEach(td => td.remove());
+            if (thead) thead.querySelectorAll('th.hv-col').forEach(th => th.remove());
+            document.querySelectorAll('#t4 .hv-win').forEach(c => c.classList.remove('hv-win'));
+
+            const jan = janela();
+            const ativo = jan && !jan.vazio;
+
+            // Conta por veículo (sempre no mês) e por período
+            const cont = { TODOS: 0 };
+            linhas.forEach(tr => {
+                const cat = tipo(tr.cells[2].innerText);
+                tr.dataset.hvCat = cat;
+                cont[cat] = (cont[cat] || 0) + 1;
+                cont.TODOS++;
+                let p = 0;
+                if (ativo) for (let k = jan.ini; k <= jan.fim; k++) { const td = tr.cells[2 + k]; if (td) p += valorCelula(td); }
+                tr.dataset.hvPer = p;
+            });
+
+            // Mostra / esconde por veículo
+            let motoristas = 0, rotas = 0;
+            const visiveis = [];
+            linhas.forEach(tr => {
+                const mostrar = filtro === 'TODOS' || tr.dataset.hvCat === filtro;
+                tr.classList.toggle('hv-hide', !mostrar);
+                if (mostrar) {
+                    visiveis.push(tr);
+                    motoristas++;
+                    rotas += ativo ? +tr.dataset.hvPer : (parseInt(tr.cells[tr.cells.length - 1].innerText, 10) || 0);
+                }
+            });
+
+            // Ordem: no período, quem mais rodou em cima; no mês, a ordem original do sistema
+            const ordem = [...linhas].sort((a, b) => ativo
+                ? (b.dataset.hvPer - a.dataset.hvPer) || ((parseInt(b.cells[b.cells.length - 1].innerText, 10) || 0) - (parseInt(a.cells[a.cells.length - 1].innerText, 10) || 0)) || (a.dataset.hvIdx - b.dataset.hvIdx)
+                : (a.dataset.hvIdx - b.dataset.hvIdx));
+            ordem.forEach(tr => tbody.appendChild(tr));
+
+            // Coluna do período + destaque dos dias da janela
+            if (ativo) {
+                const thTotal = thead && thead.rows[0] ? thead.rows[0].cells[thead.rows[0].cells.length - 1] : null;
+                if (thTotal) {
+                    const th = document.createElement('th');
+                    th.className = 'hv-col';
+                    th.innerHTML = `${periodo} dias<br><span style="font-size:8px; color:#94a3b8;">${pad(jan.ini)}–${pad(jan.fim)}/${pad(jan.m)}</span>`;
+                    thTotal.parentNode.insertBefore(th, thTotal);
+                    for (let k = jan.ini; k <= jan.fim; k++) { const c = thead.rows[0].cells[2 + k]; if (c) c.classList.add('hv-win'); }
+                }
+                const valoresVis = visiveis.map(tr => +tr.dataset.hvPer);
+                const topCorte = [...valoresVis].sort((a, b) => b - a)[Math.min(2, valoresVis.length - 1)] || 0;
+                linhas.forEach(tr => {
+                    for (let k = jan.ini; k <= jan.fim; k++) { const c = tr.cells[2 + k]; if (c) c.classList.add('hv-win'); }
+                    const p = +tr.dataset.hvPer;
+                    const td = document.createElement('td');
+                    td.className = 'hv-col';
+                    const cls = p === 0 ? 'hv-low' : (p >= topCorte && topCorte > 0 ? 'hv-top' : '');
+                    td.innerHTML = `<span class="hv-col-n ${cls}" title="Rotas nos últimos ${periodo} dias">${p}</span>`;
+                    tr.insertBefore(td, tr.cells[tr.cells.length - 1]);
+                });
+
+                // Fixa a coluna do período colada no Total e rola a tabela até os dias do período
+                const larguraTotal = thTotal ? thTotal.offsetWidth : 60;
+                document.querySelectorAll('#t4 .hv-col').forEach(c => { c.style.right = larguraTotal + 'px'; });
+                const scroll = tbody.closest('.table-scroll');
+                if (scroll) scroll.scrollLeft = scroll.scrollWidth;
+            }
+
+            // Botões
+            document.getElementById('hv-periodo').innerHTML = PERIODOS.map(p =>
+                `<span class="hv-per ${p.d === periodo ? 'active' : ''}" onclick="hvPeriodo(${p.d})">${p.nome}</span>`).join('');
+            document.getElementById('hv-chips').innerHTML = GRUPOS
+                .filter(g => g.k === 'TODOS' || g.k === filtro || cont[g.k] || (g.k !== 'OUTROS' && g.k !== 'VUC'))
+                .map(g => {
+                    const n = cont[g.k] || 0;
+                    return `<span class="hv-chip ${g.k === filtro ? 'active' : ''} ${n ? '' : 'hv-zero'}" style="--hv:${g.cor}" onclick="hvFiltrar('${g.k}')">
+                        <i class="fa-solid ${g.icon}"></i> ${g.nome} <span class="hv-n">${n}</span></span>`;
+                }).join('');
+
+            // Resumo
+            const nomeFiltro = GRUPOS.find(g => g.k === filtro).nome;
+            let txt = '';
+            if (cont.TODOS) {
+                if (jan && jan.vazio) txt = 'Mês futuro: ainda não há dias para o período.';
+                else if (!motoristas) txt = `Nenhum motorista de <b>${nomeFiltro}</b> neste mês.`;
+                else {
+                    txt = `Mostrando <b>${motoristas}</b> motorista${motoristas === 1 ? '' : 's'}${filtro === 'TODOS' ? '' : ` de <b>${nomeFiltro}</b>`} · <b>${rotas}</b> rota${rotas === 1 ? '' : 's'} ${ativo ? `nos últimos ${periodo} dias` : 'no mês'}`;
+                    if (ativo) txt += `<br>Período: <b>${pad(jan.ini)}/${pad(jan.m)} a ${pad(jan.fim)}/${pad(jan.m)}</b>${jan.cortado ? ' (só os dias deste mês)' : ''} · quem mais rodou em cima`;
+                }
+            }
+            document.getElementById('hv-resumo').innerHTML = txt;
+
+            if (observer) { observer.takeRecords(); observer.observe(tbody, { childList: true }); }
+        }
+
+        window.hvFiltrar = function (k) { filtro = k; aplicar(); };
+        window.hvPeriodo = function (d) { periodo = d; aplicar(); };
+
+        function montar() {
+            const tabela = document.querySelector('#module-historico .table-wrap');
+            const tbody = document.getElementById('b-historico');
+            if (!tabela || !tbody || document.getElementById('hv-bar')) return;
+
+            const bar = document.createElement('div');
+            bar.id = 'hv-bar';
+            bar.className = 'hv-bar';
+            bar.innerHTML = '<div class="hv-left"><div class="hv-periodo" id="hv-periodo"></div><div class="hv-sep"></div><div class="hv-chips" id="hv-chips"></div></div><div class="hv-resumo" id="hv-resumo"></div>';
+            tabela.parentNode.insertBefore(bar, tabela);
+
+            // Reaplica sempre que a matriz for redesenhada (troca de mês, importação, limpeza de dia)
+            observer = new MutationObserver(aplicar);
+            observer.observe(tbody, { childList: true });
+            aplicar();
+        }
+
+        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', montar);
+        else montar();
+    })();
+</script>
+
+<script>setTimeout(function(){ document.querySelectorAll(".nav-module")[1].click(); }, 300);</script>
 </body>
 </html>
