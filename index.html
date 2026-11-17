@@ -2724,6 +2724,7 @@
     #t4 .hv-col-n.hv-low { color: #64748b; background: transparent; border-color: #1e293b; }
     #t4 th.hv-win { background: #1a1424 !important; color: #fff !important; }
     #t4 td.hv-win { background: rgba(238,77,45,0.05); }
+
 </style>
 <script>
     (function () {
@@ -2741,6 +2742,10 @@
         let periodo = 0;
         let observer = null;
         let seq = 0;
+        let linhas = [];        // linhas de motorista da matriz atual (cache)
+        let cont = { TODOS: 0 };
+        let colKey = '';        // assinatura da coluna do período já desenhada
+        let agendado = null;
         const pad = n => String(n).padStart(2, '0');
 
         function tipo(v) {
@@ -2768,98 +2773,109 @@
             return { ini: Math.max(1, iniReal), fim, m, cortado: iniReal < 1 };
         }
 
-        function valorCelula(td) {
-            const n = parseInt((td.innerText || '').trim(), 10);
-            return isNaN(n) ? 0 : n;
+        const num = td => { const n = parseInt((td && td.textContent || '').trim(), 10); return isNaN(n) ? 0 : n; };
+
+        // 1) Lê a matriz UMA vez quando ela é redesenhada (troca de mês, importação, limpeza)
+        function lerMatriz() {
+            const tbody = document.getElementById('b-historico');
+            linhas = Array.from(tbody.rows).filter(tr => tr.cells.length >= 4 && !tr.cells[0].hasAttribute('colspan'));
+            cont = { TODOS: 0 };
+            linhas.forEach(tr => {
+                tr.dataset.hvIdx = ++seq;
+                const cat = tipo(tr.cells[2].textContent);
+                tr._hvCat = cat;
+                tr._hvTot = num(tr.cells[tr.cells.length - 1]);
+                tr._hvDias = Array.from(tr.cells).slice(3, tr.cells.length - 1).map(num); // valor de cada dia
+                cont[cat] = (cont[cat] || 0) + 1;
+                cont.TODOS++;
+            });
+            colKey = '';
         }
 
-        function aplicar() {
+        // 2) Coluna do período: só redesenha quando muda o período ou a matriz
+        function desenharPeriodo(jan, ativo) {
+            const key = ativo ? `${periodo}|${jan.ini}|${jan.fim}|${seq}` : 'off|' + seq;
+            if (key === colKey) return false;
+            colKey = key;
             const tbody = document.getElementById('b-historico');
             const thead = document.getElementById('h-historico');
-            if (!tbody || !document.getElementById('hv-bar')) return;
-            if (observer) observer.disconnect();
-
-            const linhas = Array.from(tbody.rows).filter(tr => tr.cells.length >= 4 && !tr.cells[0].hasAttribute('colspan'));
-            linhas.forEach(tr => { if (!tr.dataset.hvIdx) tr.dataset.hvIdx = ++seq; });
-
-            // Limpa marcações anteriores do período
             tbody.querySelectorAll('td.hv-col').forEach(td => td.remove());
             if (thead) thead.querySelectorAll('th.hv-col').forEach(th => th.remove());
             document.querySelectorAll('#t4 .hv-win').forEach(c => c.classList.remove('hv-win'));
 
-            const jan = janela();
-            const ativo = jan && !jan.vazio;
-
-            // Conta por veículo (sempre no mês) e por período
-            const cont = { TODOS: 0 };
             linhas.forEach(tr => {
-                const cat = tipo(tr.cells[2].innerText);
-                tr.dataset.hvCat = cat;
-                cont[cat] = (cont[cat] || 0) + 1;
-                cont.TODOS++;
                 let p = 0;
-                if (ativo) for (let k = jan.ini; k <= jan.fim; k++) { const td = tr.cells[2 + k]; if (td) p += valorCelula(td); }
-                tr.dataset.hvPer = p;
+                if (ativo) for (let k = jan.ini; k <= jan.fim; k++) p += tr._hvDias[k - 1] || 0;
+                tr._hvPer = p;
             });
+            if (!ativo) return true;
 
-            // Mostra / esconde por veículo
+            const thTotal = thead && thead.rows[0] ? thead.rows[0].cells[thead.rows[0].cells.length - 1] : null;
+            const larguraTotal = thTotal ? thTotal.offsetWidth : 60;   // uma única leitura de layout
+            if (thTotal) {
+                const th = document.createElement('th');
+                th.className = 'hv-col';
+                th.style.right = larguraTotal + 'px';
+                th.innerHTML = `${periodo} dias<br><span style="font-size:8px; color:#94a3b8;">${pad(jan.ini)}–${pad(jan.fim)}/${pad(jan.m)}</span>`;
+                thTotal.parentNode.insertBefore(th, thTotal);
+                for (let k = jan.ini; k <= jan.fim; k++) { const c = thead.rows[0].cells[2 + k]; if (c) c.classList.add('hv-win'); }
+            }
+            linhas.forEach(tr => {
+                for (let k = jan.ini; k <= jan.fim; k++) { const c = tr.cells[2 + k]; if (c) c.classList.add('hv-win'); }
+                const td = document.createElement('td');
+                td.className = 'hv-col';
+                td.style.right = larguraTotal + 'px';
+                td.innerHTML = `<span class="hv-col-n" title="Rotas nos últimos ${periodo} dias">${tr._hvPer}</span>`;
+                tr._hvSpan = td.firstChild;
+                tr.insertBefore(td, tr.cells[tr.cells.length - 1]);
+            });
+            return true;
+        }
+
+        function aplicar() {
+            agendado = null;
+            const tbody = document.getElementById('b-historico');
+            if (!tbody || !document.getElementById('hv-bar')) return;
+            if (observer) observer.disconnect();
+
+            const jan = janela();
+            const ativo = !!(jan && !jan.vazio);
+            const periodoMudou = desenharPeriodo(jan, ativo);
+
+            // Mostra / esconde (só mexe na linha que muda de estado)
             let motoristas = 0, rotas = 0;
             const visiveis = [];
             linhas.forEach(tr => {
-                const mostrar = filtro === 'TODOS' || tr.dataset.hvCat === filtro;
-                tr.classList.toggle('hv-hide', !mostrar);
-                if (mostrar) {
-                    visiveis.push(tr);
-                    motoristas++;
-                    rotas += ativo ? +tr.dataset.hvPer : (parseInt(tr.cells[tr.cells.length - 1].innerText, 10) || 0);
-                }
+                const mostrar = filtro === 'TODOS' || tr._hvCat === filtro;
+                if (tr.classList.contains('hv-hide') === mostrar) tr.classList.toggle('hv-hide', !mostrar);
+                if (mostrar) { visiveis.push(tr); motoristas++; rotas += ativo ? tr._hvPer : tr._hvTot; }
             });
 
-            // Ordem: no período, quem mais rodou em cima; no mês, a ordem original do sistema
-            const ordem = [...linhas].sort((a, b) => ativo
-                ? (b.dataset.hvPer - a.dataset.hvPer) || ((parseInt(b.cells[b.cells.length - 1].innerText, 10) || 0) - (parseInt(a.cells[a.cells.length - 1].innerText, 10) || 0)) || (a.dataset.hvIdx - b.dataset.hvIdx)
-                : (a.dataset.hvIdx - b.dataset.hvIdx));
-            ordem.forEach(tr => tbody.appendChild(tr));
-
-            // Coluna do período + destaque dos dias da janela
+            // Destaque dos 3 primeiros do período (só troca a classe do número)
             if (ativo) {
-                const thTotal = thead && thead.rows[0] ? thead.rows[0].cells[thead.rows[0].cells.length - 1] : null;
-                if (thTotal) {
-                    const th = document.createElement('th');
-                    th.className = 'hv-col';
-                    th.innerHTML = `${periodo} dias<br><span style="font-size:8px; color:#94a3b8;">${pad(jan.ini)}–${pad(jan.fim)}/${pad(jan.m)}</span>`;
-                    thTotal.parentNode.insertBefore(th, thTotal);
-                    for (let k = jan.ini; k <= jan.fim; k++) { const c = thead.rows[0].cells[2 + k]; if (c) c.classList.add('hv-win'); }
-                }
-                const valoresVis = visiveis.map(tr => +tr.dataset.hvPer);
-                const topCorte = [...valoresVis].sort((a, b) => b - a)[Math.min(2, valoresVis.length - 1)] || 0;
-                linhas.forEach(tr => {
-                    for (let k = jan.ini; k <= jan.fim; k++) { const c = tr.cells[2 + k]; if (c) c.classList.add('hv-win'); }
-                    const p = +tr.dataset.hvPer;
-                    const td = document.createElement('td');
-                    td.className = 'hv-col';
-                    const cls = p === 0 ? 'hv-low' : (p >= topCorte && topCorte > 0 ? 'hv-top' : '');
-                    td.innerHTML = `<span class="hv-col-n ${cls}" title="Rotas nos últimos ${periodo} dias">${p}</span>`;
-                    tr.insertBefore(td, tr.cells[tr.cells.length - 1]);
+                const vals = visiveis.map(tr => tr._hvPer).sort((a, b) => b - a);
+                const corte = vals[Math.min(2, vals.length - 1)] || 0;
+                visiveis.forEach(tr => {
+                    if (!tr._hvSpan) return;
+                    const p = tr._hvPer;
+                    const cls = 'hv-col-n' + (p === 0 ? ' hv-low' : (corte > 0 && p >= corte ? ' hv-top' : ''));
+                    if (tr._hvSpan.className !== cls) tr._hvSpan.className = cls;
                 });
-
-                // Fixa a coluna do período colada no Total e rola a tabela até os dias do período
-                const larguraTotal = thTotal ? thTotal.offsetWidth : 60;
-                document.querySelectorAll('#t4 .hv-col').forEach(c => { c.style.right = larguraTotal + 'px'; });
-                const scroll = tbody.closest('.table-scroll');
-                if (scroll) scroll.scrollLeft = scroll.scrollWidth;
             }
 
-            // Botões
-            document.getElementById('hv-periodo').innerHTML = PERIODOS.map(p =>
-                `<span class="hv-per ${p.d === periodo ? 'active' : ''}" onclick="hvPeriodo(${p.d})">${p.nome}</span>`).join('');
-            document.getElementById('hv-chips').innerHTML = GRUPOS
-                .filter(g => g.k === 'TODOS' || g.k === filtro || cont[g.k] || (g.k !== 'OUTROS' && g.k !== 'VUC'))
-                .map(g => {
-                    const n = cont[g.k] || 0;
-                    return `<span class="hv-chip ${g.k === filtro ? 'active' : ''} ${n ? '' : 'hv-zero'}" style="--hv:${g.cor}" onclick="hvFiltrar('${g.k}')">
-                        <i class="fa-solid ${g.icon}"></i> ${g.nome} <span class="hv-n">${n}</span></span>`;
-                }).join('');
+            // Ordem: só reordena quando muda o período (a ordem não depende do veículo)
+            if (periodoMudou) {
+                const ordem = [...linhas].sort((a, b) => ativo
+                    ? (b._hvPer - a._hvPer) || (b._hvTot - a._hvTot) || (a.dataset.hvIdx - b.dataset.hvIdx)
+                    : (a.dataset.hvIdx - b.dataset.hvIdx));
+                const mesmaOrdem = ordem.every((tr, i) => tbody.rows[i] === tr);
+                if (!mesmaOrdem) {
+                    const frag = document.createDocumentFragment();
+                    ordem.forEach(tr => frag.appendChild(tr));
+                    tbody.appendChild(frag);                      // uma única inserção
+                }
+                if (ativo) { const sc = tbody.closest('.table-scroll'); if (sc) sc.scrollLeft = sc.scrollWidth; }
+            }
 
             // Resumo
             const nomeFiltro = GRUPOS.find(g => g.k === filtro).nome;
@@ -2877,8 +2893,29 @@
             if (observer) { observer.takeRecords(); observer.observe(tbody, { childList: true }); }
         }
 
-        window.hvFiltrar = function (k) { filtro = k; aplicar(); };
-        window.hvPeriodo = function (d) { periodo = d; aplicar(); };
+        // Botões: atualizam na hora; o trabalho na tabela vem logo em seguida (o clique não "congela")
+        function desenharBotoes() {
+            document.getElementById('hv-periodo').innerHTML = PERIODOS.map(p =>
+                `<span class="hv-per ${p.d === periodo ? 'active' : ''}" onclick="hvPeriodo(${p.d})">${p.nome}</span>`).join('');
+            document.getElementById('hv-chips').innerHTML = GRUPOS
+                .filter(g => g.k === 'TODOS' || g.k === filtro || cont[g.k] || (g.k !== 'OUTROS' && g.k !== 'VUC'))
+                .map(g => {
+                    const n = cont[g.k] || 0;
+                    return `<span class="hv-chip ${g.k === filtro ? 'active' : ''} ${n ? '' : 'hv-zero'}" style="--hv:${g.cor}" onclick="hvFiltrar('${g.k}')">
+                        <i class="fa-solid ${g.icon}"></i> ${g.nome} <span class="hv-n">${n}</span></span>`;
+                }).join('');
+        }
+        function agendar() {
+            desenharBotoes();
+            // Primeiro o navegador pinta o botão selecionado; logo depois a tabela é atualizada
+            if (agendado) return;
+            agendado = requestAnimationFrame(() => setTimeout(aplicar, 0));
+        }
+
+        window.hvFiltrar = function (k) { if (k === filtro) return; filtro = k; agendar(); };
+        window.hvPeriodo = function (d) { if (d === periodo) return; periodo = d; agendar(); };
+
+        function aoRedesenhar() { lerMatriz(); desenharBotoes(); aplicar(); }
 
         function montar() {
             const tabela = document.querySelector('#module-historico .table-wrap');
@@ -2891,10 +2928,10 @@
             bar.innerHTML = '<div class="hv-left"><div class="hv-periodo" id="hv-periodo"></div><div class="hv-sep"></div><div class="hv-chips" id="hv-chips"></div></div><div class="hv-resumo" id="hv-resumo"></div>';
             tabela.parentNode.insertBefore(bar, tabela);
 
-            // Reaplica sempre que a matriz for redesenhada (troca de mês, importação, limpeza de dia)
-            observer = new MutationObserver(aplicar);
+            // Relê a matriz sempre que o sistema redesenhar (troca de mês, importação, limpeza de dia)
+            observer = new MutationObserver(aoRedesenhar);
             observer.observe(tbody, { childList: true });
-            aplicar();
+            aoRedesenhar();
         }
 
         if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', montar);
